@@ -1,6 +1,5 @@
 package com.stemlink.skillmentor.controllers;
 
-
 import com.stemlink.skillmentor.dto.SessionDTO;
 import com.stemlink.skillmentor.dto.response.SessionResponseDTO;
 import com.stemlink.skillmentor.entities.Session;
@@ -61,6 +60,26 @@ public class SessionController extends AbstractController {
         return sendCreatedResponse(toSessionResponseDTO(session));
     }
 
+    @PutMapping("{id}/review")
+    public ResponseEntity<SessionResponseDTO> submitReview(
+            @PathVariable Long id,
+            @RequestBody SessionDTO reviewDTO,
+            Authentication authentication) {
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        Session session = sessionService.getSessionById(id);
+
+        if (!session.getStudent().getEmail().equals(userPrincipal.getEmail())) {
+            throw new com.stemlink.skillmentor.exceptions.SkillMentorException("Unauthorized",
+                    org.springframework.http.HttpStatus.FORBIDDEN);
+        }
+
+        session.setStudentReview(reviewDTO.getStudentReview());
+        session.setStudentRating(reviewDTO.getStudentRating());
+
+        Session updated = sessionService.updateSessionById(id, reviewDTO);
+        return sendOkResponse(toSessionResponseDTO(updated));
+    }
+
     @GetMapping("/my-sessions")
     public ResponseEntity<List<SessionResponseDTO>> getMySessions(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -82,6 +101,8 @@ public class SessionController extends AbstractController {
         dto.setSessionStatus(session.getSessionStatus());
         dto.setPaymentStatus(session.getPaymentStatus());
         dto.setMeetingLink(session.getMeetingLink());
+        dto.setStudentReview(session.getStudentReview());
+        dto.setStudentRating(session.getStudentRating());
         return dto;
     }
 }

@@ -9,7 +9,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.net.URL;
 import java.security.PublicKey;
 import java.util.List;
 
@@ -20,7 +19,7 @@ public class ClerkValidator implements TokenValidator {
 
     public ClerkValidator(@Value("${clerk.jwks.url}") String clerkJwksUrl) {
         try {
-            this.jwkProvider = new UrlJwkProvider(new URL(clerkJwksUrl));
+            this.jwkProvider = new UrlJwkProvider(java.net.URI.create(clerkJwksUrl).toURL());
         } catch (Exception e) {
             log.error("Failed to initialize JwkProvider with URL: {}", clerkJwksUrl, e);
             throw new RuntimeException("Failed to initialize Clerk validator", e);
@@ -78,14 +77,40 @@ public class ClerkValidator implements TokenValidator {
     @Override
     public List<String> extractRoles(String token) {
         try {
-            if (!validateToken(token)) {
-                return null;
-            }
             DecodedJWT decodedJWT = decodeToken(token);
             if (decodedJWT == null) {
                 return null;
             }
-            return decodedJWT.getClaim("roles").asList(String.class);
+
+            // Try standard "roles" claim
+            com.auth0.jwt.interfaces.Claim rolesClaim = decodedJWT.getClaim("roles");
+            if (!rolesClaim.isMissing()) {
+                return rolesClaim.asList(String.class);
+            }
+
+            // Fallback 1: metadata -> roles
+            com.auth0.jwt.interfaces.Claim metadataClaim = decodedJWT.getClaim("metadata");
+            if (!metadataClaim.isMissing()) {
+                Object roles = metadataClaim.asMap().get("roles");
+                if (roles instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<String> rolesList = (List<String>) roles;
+                    return rolesList;
+                }
+            }
+
+            // Fallback 2: public_metadata -> roles
+            com.auth0.jwt.interfaces.Claim pMetadataClaim = decodedJWT.getClaim("public_metadata");
+            if (!pMetadataClaim.isMissing()) {
+                Object roles = pMetadataClaim.asMap().get("roles");
+                if (roles instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<String> rolesList = (List<String>) roles;
+                    return rolesList;
+                }
+            }
+
+            return null;
         } catch (Exception e) {
             log.error("Error extracting roles: {}", e.getMessage());
             return null;

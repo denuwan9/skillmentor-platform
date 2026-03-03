@@ -1,5 +1,7 @@
 package com.stemlink.skillmentor.security;
 
+import lombok.extern.slf4j.Slf4j;
+
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,10 +18,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationFilter extends OncePerRequestFilter {
     private final TokenValidator tokenValidator;
 
@@ -31,39 +33,34 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
 
         if (token != null) {
-            System.out.println("DEBUG: Received token: " + token.substring(0, Math.min(token.length(), 20)) + "...");
             boolean isValid = tokenValidator.validateToken(token);
-            System.out.println("DEBUG: Token validation result: " + isValid);
             if (isValid) {
                 String userId = tokenValidator.extractUserId(token);
                 String email = tokenValidator.extractEmail(token);
                 String firstName = tokenValidator.extractFirstName(token);
                 String lastName = tokenValidator.extractLastName(token);
 
-                System.out.println("DEBUG: Extracted claims - userId: " + userId + ", email: " + email + ", name: "
-                        + firstName + " " + lastName);
-
                 UserPrincipal userPrincipal = new UserPrincipal(userId, email, firstName, lastName);
-
                 List<String> roles = tokenValidator.extractRoles(token);
-                List<GrantedAuthority> authorities = roles != null ? roles.stream()
-                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                        .collect(Collectors.toList()) : new ArrayList<>();
+                List<GrantedAuthority> authorities = new ArrayList<>();
+                if (roles != null && !roles.isEmpty()) {
+                    for (String role : roles) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                    }
+                }
 
-                // Spring Security requires at least one granted authority to consider the user
-                // fully authenticated
-                // in some configurations, and to pass @PreAuthorize checks.
                 if (authorities.isEmpty()) {
                     authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-                    authorities.add(new SimpleGrantedAuthority("ROLE_STUDENT"));
                 }
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userPrincipal, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } else {
-                System.out.println("DEBUG: Token is invalid according to tokenValidator.");
+                log.warn("Invalid token provided for request: {}", request.getRequestURI());
             }
+        } else {
+            log.debug("No token provided for request: {}", request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);

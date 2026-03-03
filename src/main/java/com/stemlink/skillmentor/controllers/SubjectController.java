@@ -15,7 +15,7 @@ import java.util.List;
 @RequestMapping(path = "/api/v1/subjects")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
-public class SubjectController {
+public class SubjectController extends AbstractController {
 
     private final ModelMapper modelMapper;
     private final SubjectService subjectService;
@@ -30,16 +30,16 @@ public class SubjectController {
         return subjectService.getSubjectById(id);
     }
 
-//    @PostMapping
-//    public Subject createSubject(@Valid @RequestBody Subject subject) {
-//        Long mentorId = 1L;
-//
-//        // check validation
-//        if(subject.getSubjectName().length() < 3){
-//            return null;
-//        }
-//        return subjectService.addNewSubject(mentorId, subject);
-//    }
+    // @PostMapping
+    // public Subject createSubject(@Valid @RequestBody Subject subject) {
+    // Long mentorId = 1L;
+    //
+    // // check validation
+    // if(subject.getSubjectName().length() < 3){
+    // return null;
+    // }
+    // return subjectService.addNewSubject(mentorId, subject);
+    // }
 
     @PostMapping
     public Subject createSubject(@Valid @RequestBody SubjectDTO subjectDTO) {

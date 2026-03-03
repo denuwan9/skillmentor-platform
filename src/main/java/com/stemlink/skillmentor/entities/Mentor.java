@@ -79,11 +79,11 @@ public class Mentor implements Serializable {
     @Column(name = "updated_at")
     private Date updatedAt;
 
-    @OneToMany(mappedBy = "mentor")
+    @OneToMany(mappedBy = "mentor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Subject> subjects;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "mentor")
+    @OneToMany(mappedBy = "mentor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Session> sessions;
 
 }

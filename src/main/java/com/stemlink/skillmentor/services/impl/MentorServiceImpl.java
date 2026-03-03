@@ -15,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -57,12 +56,11 @@ public class MentorServiceImpl implements MentorService {
         try {
 
             Mentor mentor = mentorRepository.findById(id).orElseThrow(
-                    () -> new SkillMentorException("Mentor Not found", HttpStatus.NOT_FOUND)
-            );
+                    () -> new SkillMentorException("Mentor Not found", HttpStatus.NOT_FOUND));
             log.info("Successfully fetched mentor {}", id);
             return mentor;
         } catch (SkillMentorException skillMentorException) {
-            //System.err.println("Mentor not found " + skillMentorException.getMessage());
+            // System.err.println("Mentor not found " + skillMentorException.getMessage());
             // LOG LEVELS
             // DEBUG, INFO, WARN, ERROR
             // env - dev, prod
@@ -78,8 +76,7 @@ public class MentorServiceImpl implements MentorService {
     public Mentor updateMentorById(Long id, Mentor updatedMentor) {
         try {
             Mentor mentor = mentorRepository.findById(id).orElseThrow(
-                    () -> new SkillMentorException("Mentor Not found", HttpStatus.NOT_FOUND)
-            );
+                    () -> new SkillMentorException("Mentor Not found", HttpStatus.NOT_FOUND));
             modelMapper.map(updatedMentor, mentor);
             return mentorRepository.save(mentor);
         } catch (SkillMentorException skillMentorException) {
@@ -92,12 +89,19 @@ public class MentorServiceImpl implements MentorService {
 
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void deleteMentor(Long id) {
         try {
-            mentorRepository.deleteById(id);
+            Mentor mentor = mentorRepository.findById(id).orElseThrow(
+                    () -> new SkillMentorException("Mentor not found with ID: " + id, HttpStatus.NOT_FOUND));
+            mentorRepository.delete(mentor);
+            log.info("Successfully deleted mentor with id {} and all associated data", id);
+        } catch (SkillMentorException e) {
+            throw e;
         } catch (Exception exception) {
             log.error("Failed to delete mentor with id {}", id, exception);
-            throw new SkillMentorException("Failed to delete mentor", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new SkillMentorException("Failed to delete mentor due to associated data constraints",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

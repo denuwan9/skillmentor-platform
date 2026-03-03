@@ -40,6 +40,7 @@ public class AbstractController {
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(
             org.springframework.security.access.AccessDeniedException ex) {
+        System.err.println("CRITICAL: Access Denied Exception Triggered: " + ex.getMessage());
         log.error("Access denied: {}", ex.getMessage());
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .message("Access Denied: You do not have permission to perform this action.")
@@ -52,6 +53,7 @@ public class AbstractController {
     @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(
             org.springframework.security.core.AuthenticationException ex) {
+        System.err.println("CRITICAL: Authentication Exception Triggered: " + ex.getMessage());
         log.error("Authentication error: {}", ex.getMessage());
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .message("Authentication Failed: Please provide a valid token.")
@@ -65,6 +67,8 @@ public class AbstractController {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex) {
+        System.err
+                .println("CRITICAL: Generic Exception Triggered: " + ex.getClass().getName() + " - " + ex.getMessage());
         log.error("Unexpected error: ", ex);
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .message("An unexpected error occurred")
@@ -79,6 +83,8 @@ public class AbstractController {
     @ExceptionHandler(SkillMentorException.class)
     public ResponseEntity<ErrorResponse> handleSkillMentorException(
             SkillMentorException ex) {
+        System.err
+                .println("CRITICAL: SkillMentorException Triggered: " + ex.getMessage() + " Status: " + ex.getStatus());
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .message(ex.getMessage())

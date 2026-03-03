@@ -23,7 +23,9 @@ import static com.stemlink.skillmentor.constants.UserRoles.*;
 @RequestMapping(path = "/api/v1/mentors")
 @RequiredArgsConstructor
 @Validated
-//@PreAuthorize("isAuthenticated()") // Allow all authenticated users to access mentor endpoints, but specific actions are further restricted by method-level security annotations
+// @PreAuthorize("isAuthenticated()") // Allow all authenticated users to access
+// mentor endpoints, but specific actions are further restricted by method-level
+// security annotations
 public class MentorController extends AbstractController {
 
     private final MentorService mentorService;
@@ -34,7 +36,22 @@ public class MentorController extends AbstractController {
             @RequestParam(required = false) String name,
             Pageable pageable) {
         Page<Mentor> mentors = mentorService.getAllMentors(name, pageable);
+
+        // Populate stats for each mentor DTO if needed
+        // (Mentor entity already has these fields, assuming they are updated elsewhere
+        // or should be calculated)
+
         return sendOkResponse(mentors);
+    }
+
+    @GetMapping("{id}/stats")
+    public ResponseEntity<?> getMentorStats(@PathVariable Long id) {
+        Mentor mentor = mentorService.getMentorById(id);
+        // Simple mock of stats calculation or just return entity fields
+        return ResponseEntity.ok(java.util.Map.of(
+                "totalEnrollments", mentor.getSessions() != null ? mentor.getSessions().size() : 0,
+                "positiveReviews", mentor.getPositiveReviews() != null ? mentor.getPositiveReviews() : 0,
+                "yearsExperience", mentor.getExperienceYears()));
     }
 
     @GetMapping("{id}")
@@ -53,14 +70,24 @@ public class MentorController extends AbstractController {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (!isAdmin || mentorDTO.getMentorId() == null) {
-            // MENTOR role, or ADMIN without explicit identity fields in body → use JWT claims
+        if (!isAdmin) {
+            // MENTOR role - force identity from JWT claims
             mentor.setMentorId(userPrincipal.getId());
             mentor.setFirstName(userPrincipal.getFirstName());
             mentor.setLastName(userPrincipal.getLastName());
             mentor.setEmail(userPrincipal.getEmail());
+        } else {
+            // ADMIN role - use provided fields or fallback
+            if (mentor.getMentorId() == null || mentor.getMentorId().isEmpty()) {
+                mentor.setMentorId(java.util.UUID.randomUUID().toString());
+            }
+            if (mentor.getFirstName() == null)
+                mentor.setFirstName(userPrincipal.getFirstName());
+            if (mentor.getLastName() == null)
+                mentor.setLastName(userPrincipal.getLastName());
+            if (mentor.getEmail() == null)
+                mentor.setEmail(userPrincipal.getEmail());
         }
-        // else: ADMIN provided mentorId (+ firstName/lastName/email) in body → ModelMapper already mapped them
 
         Mentor createdMentor = mentorService.createNewMentor(mentor);
 

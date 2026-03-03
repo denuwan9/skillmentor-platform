@@ -1,6 +1,6 @@
 package com.stemlink.skillmentor.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,17 +26,17 @@ public class Session implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
-    @JsonIgnore
+    @JsonIgnoreProperties("sessions")
     private Student student;
 
     @ManyToOne
     @JoinColumn(name = "mentor_id", nullable = false)
-    @JsonIgnore
+    @JsonIgnoreProperties("sessions")
     private Mentor mentor;
 
     @ManyToOne
     @JoinColumn(name = "subject_id", nullable = false)
-    @JsonIgnore
+    @JsonIgnoreProperties("mentor")
     private Subject subject;
 
     @Column(name = "session_at", nullable = false)

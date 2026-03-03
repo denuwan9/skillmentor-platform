@@ -1,6 +1,5 @@
 package com.stemlink.skillmentor.services.impl;
 
-import com.stemlink.skillmentor.SkillmentorApplication;
 import com.stemlink.skillmentor.entities.Session;
 import com.stemlink.skillmentor.entities.Student;
 import com.stemlink.skillmentor.entities.Mentor;
@@ -20,8 +19,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -40,29 +37,28 @@ public class SessionServiceImpl implements SessionService {
         // Fetch the related entities by their IDs
         try {
             Student student = studentRepository.findById(sessionDTO.getStudentId()).orElseThrow(
-                    () -> new SkillMentorException("Student not found", HttpStatus.NOT_FOUND)
-            );
-            Mentor mentor = mentorRepository.findByMentorId(String.valueOf(sessionDTO.getMentorId())).orElseThrow(
-                    () -> new SkillMentorException("Mentor not found", HttpStatus.NOT_FOUND)
-            );
+                    () -> new SkillMentorException("Student not found", HttpStatus.NOT_FOUND));
+            Mentor mentor = mentorRepository.findById(sessionDTO.getMentorId()).orElseThrow(
+                    () -> new SkillMentorException("Mentor not found with ID: " + sessionDTO.getMentorId(),
+                            HttpStatus.NOT_FOUND));
             Subject subject = subjectRepository.findById(sessionDTO.getSubjectId()).orElseThrow(
-                    () -> new SkillMentorException("Subject not found", HttpStatus.NOT_FOUND)
-            );
+                    () -> new SkillMentorException("Subject not found", HttpStatus.NOT_FOUND));
 
             // Checking availability
-            ValidationUtils.validateMentorAvailability(mentor, sessionDTO.getSessionAt(), sessionDTO.getDurationMinutes());
-            ValidationUtils.validateStudentAvailability(student, sessionDTO.getSessionAt(), sessionDTO.getDurationMinutes());
-
+            ValidationUtils.validateMentorAvailability(mentor, sessionDTO.getSessionAt(),
+                    sessionDTO.getDurationMinutes());
+            ValidationUtils.validateStudentAvailability(student, sessionDTO.getSessionAt(),
+                    sessionDTO.getDurationMinutes());
 
             // Create and populate the Session entity
-//        Session session = new Session();
-//        session.setSessionAt(sessionDTO.getSessionAt());
-//        session.setDurationMinutes(sessionDTO.getDurationMinutes());
-//        session.setSessionStatus(sessionDTO.getSessionStatus());
-//        session.setMeetingLink(sessionDTO.getMeetingLink());
-//        session.setSessionNotes(sessionDTO.getSessionNotes());
-//        session.setStudentReview(sessionDTO.getStudentReview());
-//        session.setStudentRating(sessionDTO.getStudentRating());
+            // Session session = new Session();
+            // session.setSessionAt(sessionDTO.getSessionAt());
+            // session.setDurationMinutes(sessionDTO.getDurationMinutes());
+            // session.setSessionStatus(sessionDTO.getSessionStatus());
+            // session.setMeetingLink(sessionDTO.getMeetingLink());
+            // session.setSessionNotes(sessionDTO.getSessionNotes());
+            // session.setStudentReview(sessionDTO.getStudentReview());
+            // session.setStudentRating(sessionDTO.getStudentRating());
 
             // using model mapper
             Session session = modelMapper.map(sessionDTO, Session.class);
@@ -70,10 +66,10 @@ public class SessionServiceImpl implements SessionService {
             session.setMentor(mentor);
             session.setSubject(subject);
 
-
             return sessionRepository.save(session);
         } catch (SkillMentorException skillMentorException) {
-            log.error("Dependencies not found to map: {}, Failed to create new session", skillMentorException.getMessage());
+            log.error("Dependencies not found to map: {}, Failed to create new session",
+                    skillMentorException.getMessage());
             throw skillMentorException;
         } catch (Exception exception) {
             log.error("Failed to create session", exception);
@@ -102,8 +98,9 @@ public class SessionServiceImpl implements SessionService {
             session.setStudent(student);
         }
         if (updatedSessionDTO.getMentorId() != null) {
-            Mentor mentor = mentorRepository.findByMentorId(String.valueOf(updatedSessionDTO.getMentorId()))
-                    .orElseThrow(() -> new SkillMentorException("Mentor not found", HttpStatus.NOT_FOUND));
+            Mentor mentor = mentorRepository.findById(updatedSessionDTO.getMentorId())
+                    .orElseThrow(() -> new SkillMentorException(
+                            "Mentor not found with ID: " + updatedSessionDTO.getMentorId(), HttpStatus.NOT_FOUND));
             session.setMentor(mentor);
         }
         if (updatedSessionDTO.getSubjectId() != null) {
@@ -111,34 +108,55 @@ public class SessionServiceImpl implements SessionService {
             session.setSubject(subject);
         }
 
-//        // Update other fields
-//        if (updatedSessionDTO.getSessionAt() != null) {
-//            session.setSessionAt(updatedSessionDTO.getSessionAt());
-//        }
-//        if (updatedSessionDTO.getDurationMinutes() != null) {
-//            session.setDurationMinutes(updatedSessionDTO.getDurationMinutes());
-//        }
-//        if (updatedSessionDTO.getSessionStatus() != null) {
-//            session.setSessionStatus(updatedSessionDTO.getSessionStatus());
-//        }
-//        if (updatedSessionDTO.getMeetingLink() != null) {
-//            session.setMeetingLink(updatedSessionDTO.getMeetingLink());
-//        }
-//        if (updatedSessionDTO.getSessionNotes() != null) {
-//            session.setSessionNotes(updatedSessionDTO.getSessionNotes());
-//        }
-//        if (updatedSessionDTO.getStudentReview() != null) {
-//            session.setStudentReview(updatedSessionDTO.getStudentReview());
-//        }
-//        if (updatedSessionDTO.getStudentRating() != null) {
-//            session.setStudentRating(updatedSessionDTO.getStudentRating());
-//        }
+        // // Update other fields
+        // if (updatedSessionDTO.getSessionAt() != null) {
+        // session.setSessionAt(updatedSessionDTO.getSessionAt());
+        // }
+        // if (updatedSessionDTO.getDurationMinutes() != null) {
+        // session.setDurationMinutes(updatedSessionDTO.getDurationMinutes());
+        // }
+        // if (updatedSessionDTO.getSessionStatus() != null) {
+        // session.setSessionStatus(updatedSessionDTO.getSessionStatus());
+        // }
+        // if (updatedSessionDTO.getMeetingLink() != null) {
+        // session.setMeetingLink(updatedSessionDTO.getMeetingLink());
+        // }
+        // if (updatedSessionDTO.getSessionNotes() != null) {
+        // session.setSessionNotes(updatedSessionDTO.getSessionNotes());
+        // }
+        // if (updatedSessionDTO.getStudentReview() != null) {
+        // session.setStudentReview(updatedSessionDTO.getStudentReview());
+        // }
+        // if (updatedSessionDTO.getStudentRating() != null) {
+        // session.setStudentRating(updatedSessionDTO.getStudentRating());
+        // }
 
         return sessionRepository.save(session);
     }
 
     public void deleteSession(Long id) {
         sessionRepository.deleteById(id);
+    }
+
+    @Override
+    public Session confirmPayment(Long id) {
+        Session session = sessionRepository.findById(id).orElseThrow(() -> new RuntimeException("Session not found"));
+        session.setPaymentStatus("confirmed");
+        return sessionRepository.save(session);
+    }
+
+    @Override
+    public Session markComplete(Long id) {
+        Session session = sessionRepository.findById(id).orElseThrow(() -> new RuntimeException("Session not found"));
+        session.setSessionStatus("completed");
+        return sessionRepository.save(session);
+    }
+
+    @Override
+    public Session updateMeetingLink(Long id, String meetingLink) {
+        Session session = sessionRepository.findById(id).orElseThrow(() -> new RuntimeException("Session not found"));
+        session.setMeetingLink(meetingLink);
+        return sessionRepository.save(session);
     }
 
     public Session enrollSession(UserPrincipal userPrincipal, SessionDTO sessionDTO) {
@@ -153,10 +171,21 @@ public class SessionServiceImpl implements SessionService {
                     return studentRepository.save(s);
                 });
 
-        Mentor mentor = mentorRepository.findByMentorId(String.valueOf(sessionDTO.getMentorId()))
-                .orElseThrow(() -> new RuntimeException("Mentor not found with mentorId: " + sessionDTO.getMentorId()));
+        Mentor mentor = mentorRepository.findById(sessionDTO.getMentorId())
+                .orElseThrow(() -> new RuntimeException("Mentor not found with ID: " + sessionDTO.getMentorId()));
         Subject subject = subjectRepository.findById(sessionDTO.getSubjectId())
-                .orElseThrow(() -> new RuntimeException("Subject not found with id: " + sessionDTO.getSubjectId()));
+                .orElseThrow(() -> new SkillMentorException("Subject not found with id: " + sessionDTO.getSubjectId(),
+                        HttpStatus.NOT_FOUND));
+
+        // Validation 1: Session time must not be in the past
+        if (sessionDTO.getSessionAt().before(new Date())) {
+            throw new SkillMentorException("Cannot book a session in the past", HttpStatus.BAD_REQUEST);
+        }
+
+        // Validation 2: Double-booking prevention (Mentor and Student availability)
+        Integer duration = sessionDTO.getDurationMinutes() != null ? sessionDTO.getDurationMinutes() : 60;
+        ValidationUtils.validateMentorAvailability(mentor, sessionDTO.getSessionAt(), duration);
+        ValidationUtils.validateStudentAvailability(student, sessionDTO.getSessionAt(), duration);
 
         Session session = new Session();
         session.setStudent(student);
