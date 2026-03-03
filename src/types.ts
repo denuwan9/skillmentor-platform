@@ -4,6 +4,7 @@ export interface Subject {
   subjectName: string;
   description: string;
   courseImageUrl: string;
+  enrollmentCount: number;
 }
 
 // Modified to match with backend MentorResponseDTO (from GET /api/v1/mentors)
@@ -21,9 +22,12 @@ export interface Mentor {
   profileImageUrl: string;
   positiveReviews: number;
   totalEnrollments: number;
+  averageRating: number;
+  totalReviews: number;
   isCertified: boolean;
   startYear: string;
   subjects: Subject[];
+  reviews?: any[];
 }
 
 // Modified to match with SessionResponseDTO (from GET /api/v1/sessions/my-sessions)
@@ -37,6 +41,8 @@ export interface Enrollment {
   sessionStatus: "scheduled" | "completed" | string;
   paymentStatus: "pending" | "confirmed" | "completed" | "cancelled" | string;
   meetingLink: string | null;
+  studentReview?: string;
+  studentRating?: number;
 }
 
 export interface User {

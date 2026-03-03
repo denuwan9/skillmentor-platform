@@ -5,11 +5,16 @@ import { StatusPill } from "@/components/StatusPill";
 import { getMyEnrollments } from "@/lib/api";
 import type { Enrollment } from "@/types";
 import { useNavigate } from "react-router";
+import { Button } from "@/components/ui/button";
+import { ReviewModal } from "@/components/ReviewModal";
+import { Star } from "lucide-react";
 
 export default function DashboardPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const router = useNavigate();
 
   useEffect(() => {
@@ -30,6 +35,15 @@ export default function DashboardPage() {
       fetchEnrollments();
     }
   }, [isLoaded, isSignedIn, getToken, user]);
+
+  const handleReviewSuccess = () => {
+    // Refresh enrollments to update UI state if needed
+    if (user) {
+      getToken({ template: "skillmentor-auth" }).then(token => {
+        if (token) getMyEnrollments(token).then(setEnrollments);
+      });
+    }
+  };
 
   if (!isLoaded) {
     return (
@@ -96,13 +110,47 @@ export default function DashboardPage() {
               </p>
               <div className="flex items-center text-blue-100/80 text-sm mt-2">
                 <CalendarDays className="mr-2 h-4 w-4" />
-                Next Session:{" "}
+                {enrollment.sessionStatus === "completed" ? "Completed on: " : "Next Session: "}
                 {new Date(enrollment.sessionAt).toLocaleDateString()}
               </div>
             </div>
+
+            {/* Review Button */}
+            {enrollment.sessionStatus === "completed" && (
+              <div className="mt-4 pt-4 border-t border-white/10">
+                {enrollment.studentRating ? (
+                  <div className="flex items-center gap-1.5 text-white/90 text-sm bg-white/10 w-fit px-3 py-1 rounded-full">
+                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    <span>Your Rating: {enrollment.studentRating}/5</span>
+                  </div>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full bg-white text-blue-600 hover:bg-white/90"
+                    onClick={() => {
+                      setSelectedEnrollment(enrollment);
+                      setIsReviewModalOpen(true);
+                    }}
+                  >
+                    Write a Review
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
+
+      {selectedEnrollment && (
+        <ReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          sessionId={selectedEnrollment.id}
+          mentorName={selectedEnrollment.mentorName}
+          onSuccess={handleReviewSuccess}
+        />
+      )}
     </div>
   );
 }

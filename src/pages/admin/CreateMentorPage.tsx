@@ -62,7 +62,9 @@ const mentorSchema = z.object({
     bio: z.string().min(20, "Bio must be at least 20 characters"),
     profileImageUrl: z.string().url("Invalid image URL").or(z.string().length(0)),
     isCertified: z.boolean(),
-    startYear: z.string().min(4, "Start year is required")
+    startYear: z.string().min(4, "Start year is required"),
+    skills: z.string().optional(),
+    experienceHighlights: z.string().optional()
 });
 
 type MentorFormValues = z.infer<typeof mentorSchema>;
@@ -92,10 +94,11 @@ const CreateMentorPage = () => {
             profession: "",
             company: "",
             experienceYears: 0,
-            bio: "",
             profileImageUrl: "",
             isCertified: false,
             startYear: new Date().getFullYear().toString(),
+            skills: "",
+            experienceHighlights: ""
         },
     });
 
@@ -115,6 +118,8 @@ const CreateMentorPage = () => {
                 profileImageUrl: user.imageUrl || "",
                 isCertified: false,
                 startYear: new Date().getFullYear().toString(),
+                skills: "",
+                experienceHighlights: ""
             });
         }
     }, [user, editingMentorId, form]);
@@ -163,6 +168,8 @@ const CreateMentorPage = () => {
             profileImageUrl: mentor.profileImageUrl || "",
             isCertified: !!mentor.isCertified,
             startYear: String(mentor.startYear || ""),
+            skills: Array.isArray(mentor.skills) ? mentor.skills.join(", ") : "",
+            experienceHighlights: Array.isArray(mentor.experienceHighlights) ? mentor.experienceHighlights.join(", ") : "",
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
         toast.info(`Editing ${mentor.firstName}'s profile`);
@@ -212,6 +219,8 @@ const CreateMentorPage = () => {
             profileImageUrl: user?.imageUrl || "",
             isCertified: false,
             startYear: new Date().getFullYear().toString(),
+            skills: "",
+            experienceHighlights: ""
         });
     };
 
@@ -228,7 +237,11 @@ const CreateMentorPage = () => {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(values)
+                body: JSON.stringify({
+                    ...values,
+                    skills: values.skills ? values.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
+                    experienceHighlights: values.experienceHighlights ? values.experienceHighlights.split(",").map(h => h.trim()).filter(Boolean) : []
+                })
             });
             const data = await res.json();
 
@@ -373,6 +386,24 @@ const CreateMentorPage = () => {
 
                                         <FormField control={form.control} name="bio" render={({ field }) => (
                                             <FormItem><FormLabel>Professional Bio</FormLabel><FormControl><Textarea placeholder="Share expertise and experience..." className="h-32 resize-none" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+
+                                        <FormField control={form.control} name="skills" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Skills / Specializations (Comma separated)</FormLabel>
+                                                <FormControl><Input placeholder="React, Java, Cloud Architecture..." {...field} /></FormControl>
+                                                <p className="text-[10px] text-slate-400">These will appear as badges on the profile.</p>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+
+                                        <FormField control={form.control} name="experienceHighlights" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Experience Highlights (Comma separated)</FormLabel>
+                                                <FormControl><Input placeholder="10+ Projects led, 5 years at Google..." {...field} /></FormControl>
+                                                <p className="text-[10px] text-slate-400">Key achievements to showcase expertise.</p>
+                                                <FormMessage />
+                                            </FormItem>
                                         )} />
                                     </div>
 

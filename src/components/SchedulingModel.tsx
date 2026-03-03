@@ -67,10 +67,12 @@ export function SchedulingModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-center space-y-0">
-          <DialogTitle>Schedule this session</DialogTitle>
-          <DialogDescription className="sr-only">
-            Pick a date and time for your mentoring session with {mentorName}.
+        <DialogHeader className="flex flex-col items-start gap-1">
+          <DialogTitle className="text-2xl">
+            Book {subject?.subjectName}
+          </DialogTitle>
+          <DialogDescription className="text-slate-500">
+            Schedule your session with <span className="font-semibold text-slate-900">{mentorName}</span>
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

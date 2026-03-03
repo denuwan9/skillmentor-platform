@@ -35,7 +35,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import { BookOpen, Plus, Trash2, Search, GraduationCap } from "lucide-react";
+import { BookOpen, Plus, Trash2, Search, GraduationCap, Edit, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/clerk-react";
 
@@ -54,6 +54,7 @@ const CreateSubjectPage = () => {
     const [subjects, setSubjects] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [searchTerm, setSearchTerm] = React.useState("");
+    const [editingId, setEditingId] = React.useState<number | null>(null);
 
     const form = useForm<SubjectFormValues>({
         resolver: zodResolver(subjectSchema),
@@ -105,8 +106,15 @@ const CreateSubjectPage = () => {
                 toast.error("Authentication session missing. Please refresh.");
                 return;
             }
-            const res = await fetch("http://localhost:8081/api/v1/subjects", {
-                method: "POST",
+
+            const url = editingId
+                ? `http://localhost:8081/api/v1/subjects/${editingId}`
+                : "http://localhost:8081/api/v1/subjects";
+
+            const method = editingId ? "PUT" : "POST";
+
+            const res = await fetch(url, {
+                method,
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
@@ -114,21 +122,54 @@ const CreateSubjectPage = () => {
                 body: JSON.stringify({
                     subjectName: values.subjectName,
                     description: values.description,
-                    courseImageUrl: values.thumbnailUrl, // Map frontend thumbnailUrl to backend courseImageUrl
+                    courseImageUrl: values.thumbnailUrl,
                     mentorId: Number(values.mentorId)
                 })
             });
 
             if (res.ok) {
-                toast.success("Subject created successfully!");
+                toast.success(editingId ? "Subject updated!" : "Subject created!");
                 form.reset();
-                fetchData(); // Refresh list
+                setEditingId(null);
+                fetchData();
             } else {
-                toast.error("Failed to create subject. Please check your input.");
+                toast.error("Failed to save subject. Please check your input.");
             }
         } catch (err) {
-            console.error("Failed to create subject:", err);
+            console.error("Failed to save subject:", err);
             toast.error("A network error occurred.");
+        }
+    };
+
+    const handleEdit = (subject: any) => {
+        setEditingId(subject.id);
+        form.setValue("subjectName", subject.subjectName);
+        form.setValue("description", subject.description);
+        form.setValue("thumbnailUrl", subject.courseImageUrl || subject.thumbnailUrl);
+        form.setValue("mentorId", String(subject.mentor?.id || ""));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!confirm("Are you sure you want to delete this subject?")) return;
+
+        try {
+            const token = await getToken({ template: "skillmentor-auth" });
+            if (!token) return;
+
+            const res = await fetch(`http://localhost:8081/api/v1/subjects/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                toast.success("Subject deleted successfully");
+                fetchData();
+            } else {
+                toast.error("Failed to delete subject");
+            }
+        } catch (err) {
+            toast.error("Error deleting subject");
         }
     };
 
@@ -153,12 +194,31 @@ const CreateSubjectPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <Card className="lg:col-span-12 xl:col-span-5 border-slate-200 shadow-xl shadow-slate-200/50">
                     <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-                        <div className="flex items-center gap-2 text-indigo-600 mb-1">
-                            <Plus className="w-5 h-5" />
-                            <span className="text-sm font-bold uppercase tracking-wider">New Subject</span>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-indigo-600 mb-1">
+                                {editingId ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                                <span className="text-sm font-bold uppercase tracking-wider">
+                                    {editingId ? "Edit Subject" : "New Subject"}
+                                </span>
+                            </div>
+                            {editingId && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setEditingId(null);
+                                        form.reset();
+                                    }}
+                                    className="h-8 text-slate-500"
+                                >
+                                    <X className="w-4 h-4 mr-1" /> Cancel
+                                </Button>
+                            )}
                         </div>
-                        <CardTitle>Create Subject</CardTitle>
-                        <CardDescription>Assign themes and experts to new curriculum items.</CardDescription>
+                        <CardTitle>{editingId ? "Update Existing Subject" : "Create Subject"}</CardTitle>
+                        <CardDescription>
+                            {editingId ? "Modify the details of your active subject." : "Assign themes and experts to new curriculum items."}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6">
                         <Form {...form}>
@@ -234,7 +294,7 @@ const CreateSubjectPage = () => {
                                     )}
                                 />
                                 <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 h-11">
-                                    Launch Subject
+                                    {editingId ? "Save Changes" : "Launch Subject"}
                                 </Button>
                             </form>
                         </Form>
@@ -297,9 +357,24 @@ const CreateSubjectPage = () => {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleEdit(subject)}
+                                                        className="h-8 w-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleDelete(subject.id)}
+                                                        className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}

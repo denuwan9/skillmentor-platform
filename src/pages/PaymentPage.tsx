@@ -64,11 +64,10 @@ export default function PaymentPage() {
       setTimeout(() => {
         navigate("/dashboard");
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description:
-          "There was a problem scheduling your session. Please try again.",
+        title: "Booking Failed",
+        description: error.message || "There was a problem scheduling your session. Please try again.",
         variant: "destructive",
       });
       setIsUploading(false);

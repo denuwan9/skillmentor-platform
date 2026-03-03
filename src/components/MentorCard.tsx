@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Link } from "react-router";
 import {
   Building2,
   Calendar,
@@ -49,10 +50,10 @@ export function MentorCard({ mentor }: MentorCardProps) {
               <div className="flex items-center space-x-2">
                 <ThumbsUp className="size-6" />
                 <p className="text-sm text-muted-foreground">
-                  {mentor.positiveReviews}% positive reviews
+                  {mentor.totalReviews > 0 ? `${mentor.positiveReviews ?? 0}% positive reviews` : "No reviews yet"}
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
+              <Link to={`/mentors/${mentor.id}`} className="flex items-center space-x-2 hover:text-primary transition-colors">
                 {mentor.profileImageUrl ? (
                   <img
                     src={mentor.profileImageUrl}
@@ -64,8 +65,8 @@ export function MentorCard({ mentor }: MentorCardProps) {
                     {mentor.firstName.charAt(0)}
                   </div>
                 )}
-                <span className="text-sm">{mentorName}</span>
-              </div>
+                <span className="text-sm font-medium">{mentorName}</span>
+              </Link>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Building2 className="size-6" />
                 <span>{mentor.company}</span>
@@ -119,7 +120,7 @@ export function MentorCard({ mentor }: MentorCardProps) {
               <div className="flex items-center space-x-2">
                 <GraduationCap className="w-4 h-4" />
                 <span className="text-sm">
-                  {mentor.totalEnrollments} Enrollments
+                  {mentor.subjects[0]?.enrollmentCount ?? mentor.totalEnrollments ?? 0} Enrollments
                 </span>
               </div>
 

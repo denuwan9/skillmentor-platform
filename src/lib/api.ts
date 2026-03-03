@@ -58,3 +58,16 @@ export async function getMyEnrollments(token: string): Promise<Enrollment[]> {
   const res = await fetchWithAuth("/api/v1/sessions/my-sessions", token);
   return res.json();
 }
+
+export async function submitReview(
+  token: string,
+  sessionId: number,
+  rating: number,
+  review: string,
+): Promise<Enrollment> {
+  const res = await fetchWithAuth(`/api/v1/sessions/${sessionId}/review`, token, {
+    method: "PUT",
+    body: JSON.stringify({ studentRating: rating, studentReview: review }),
+  });
+  return res.json();
+}

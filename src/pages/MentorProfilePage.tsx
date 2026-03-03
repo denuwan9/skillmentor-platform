@@ -1,17 +1,18 @@
 import React from "react";
 import { useParams, Link } from "react-router";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-    Briefcase,
-    GraduationCap,
-    Star,
     CheckCircle2,
+    Award,
+    Briefcase,
+    Star,
     Calendar,
     ChevronLeft,
     Users,
-    Award
+    GraduationCap,
+    Lightbulb
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
     Card,
     CardContent,
@@ -30,15 +31,18 @@ const MentorProfilePage = () => {
     const [selectedSubject, setSelectedSubject] = React.useState<any>(null);
 
     React.useEffect(() => {
-        // Fetch mentor details from API
-        fetch(`http://localhost:8081/api/v1/mentors/${mentorId}`)
-            .then(res => res.json())
+        // Fetch mentor details from the NEW public profile endpoint
+        fetch(`http://localhost:8081/api/v1/mentors/${mentorId}/profile`)
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to load profile");
+                return res.json();
+            })
             .then(data => {
                 setMentor(data);
                 setLoading(false);
             })
             .catch(err => {
-                console.error("Failed to fetch mentor:", err);
+                console.error("Failed to fetch mentor profile:", err);
                 setLoading(false);
             });
     }, [mentorId]);
@@ -80,7 +84,7 @@ const MentorProfilePage = () => {
 
                                     <div className="flex flex-wrap gap-4 text-sm text-slate-500">
                                         <div className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" />{mentor.experienceYears} Years Experience</div>
-                                        <div className="flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500 fill-amber-500" />{mentor.positiveReviews || 0} Positive Reviews</div>
+                                        <div className="flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500 fill-amber-500" />{mentor.averageRating?.toFixed(1) || "0.0"} ({mentor.totalReviews || 0} reviews)</div>
                                         <div className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />Since {mentor.startYear || "2024"}</div>
                                     </div>
 
@@ -107,6 +111,23 @@ const MentorProfilePage = () => {
                                 <CardHeader><CardTitle className="text-xl">Biography</CardTitle></CardHeader>
                                 <CardContent><p className="text-slate-600 leading-relaxed whitespace-pre-line">{mentor.bio}</p></CardContent>
                             </Card>
+
+                            {mentor.experienceHighlights && mentor.experienceHighlights.length > 0 && (
+                                <Card className="border-slate-100 shadow-sm">
+                                    <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Lightbulb className="w-5 h-5 text-amber-500" /> Career Highlights</CardTitle></CardHeader>
+                                    <CardContent>
+                                        <ul className="space-y-3">
+                                            {mentor.experienceHighlights.map((highlight: string, idx: number) => (
+                                                <li key={idx} className="flex items-start gap-3 text-slate-600">
+                                                    <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+                                                    <span>{highlight}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </CardContent>
+                                </Card>
+                            )}
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Card className="border-slate-100 shadow-sm">
                                     <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700"><GraduationCap className="w-4 h-4" /> Expertise</CardTitle></CardHeader>
@@ -115,7 +136,13 @@ const MentorProfilePage = () => {
                                 <Card className="border-slate-100 shadow-sm">
                                     <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700"><Award className="w-4 h-4" /> Key Skills</CardTitle></CardHeader>
                                     <CardContent className="flex flex-wrap gap-2">
-                                        {mentor.subjects?.map((s: any) => (<Badge key={s.id} variant="outline" className="text-slate-500">{s.subjectName}</Badge>))}
+                                        {(mentor.skills && mentor.skills.length > 0) ? (
+                                            mentor.skills.map((skill: string, idx: number) => (
+                                                <Badge key={idx} variant="secondary" className="bg-slate-100 text-slate-600 border-none">{skill}</Badge>
+                                            ))
+                                        ) : (
+                                            mentor.subjects?.map((s: any) => (<Badge key={s.id} variant="outline" className="text-slate-500">{s.subjectName}</Badge>))
+                                        )}
                                     </CardContent>
                                 </Card>
                             </div>
@@ -126,7 +153,7 @@ const MentorProfilePage = () => {
                                 {mentor.subjects?.map((subject: any) => (
                                     <Card key={subject.id} className="overflow-hidden border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                         <div className="h-40 bg-slate-100 relative">
-                                            <img src={subject.thumbnailUrl || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60"} alt={subject.subjectName} className="w-full h-full object-cover" />
+                                            <img src={subject.courseImageUrl || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60"} alt={subject.subjectName} className="w-full h-full object-cover" />
                                             <div className="absolute bottom-2 right-2"><Badge className="bg-white/90 text-slate-900 border-none backdrop-blur-sm">{subject.enrollmentCount || 0} Enrolled</Badge></div>
                                         </div>
                                         <CardHeader className="p-4">
@@ -147,8 +174,28 @@ const MentorProfilePage = () => {
                         <TabsContent value="reviews" className="mt-6">
                             <Card className="border-slate-100 shadow-sm">
                                 <CardHeader><CardTitle>What Students Say</CardTitle><CardDescription>Verified reviews from completed sessions</CardDescription></CardHeader>
-                                <CardContent>
-                                    <div className="text-center py-10 text-slate-400"><Users className="w-12 h-12 mx-auto mb-3 opacity-20" /><p>No reviews yet. Be the first to rate this mentor!</p></div>
+                                <CardContent className="space-y-6">
+                                    {mentor.reviews && mentor.reviews.length > 0 ? (
+                                        mentor.reviews.map((review: any, idx: number) => (
+                                            <div key={idx} className="space-y-2 pb-6 border-b border-slate-50 last:border-0 last:pb-0">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="font-semibold text-slate-900">{review.studentName}</div>
+                                                    <div className="flex gap-0.5">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'text-amber-500 fill-amber-500' : 'text-slate-200'}`} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <p className="text-slate-600 text-sm leading-relaxed italic">"{review.reviewText}"</p>
+                                                <div className="text-[10px] text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-10 text-slate-400">
+                                            <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                            <p>No reviews yet. Be the first to rate this mentor!</p>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </TabsContent>
@@ -161,8 +208,8 @@ const MentorProfilePage = () => {
                         <CardContent className="p-0">
                             <div className="divide-y divide-slate-100">
                                 <div className="p-6 flex items-center justify-between"><span className="text-slate-600 font-medium">Students Taught</span><span className="text-2xl font-bold text-slate-900">{mentor.totalEnrollments || 0}</span></div>
-                                <div className="p-6 flex items-center justify-between"><span className="text-slate-600 font-medium">Avg. Rating</span><div className="flex items-center gap-1"><span className="text-2xl font-bold text-slate-900">4.9</span><Star className="w-4 h-4 text-amber-500 fill-amber-500" /></div></div>
-                                <div className="p-6 flex items-center justify-between"><span className="text-slate-600 font-medium">Course Completion</span><span className="text-2xl font-bold text-slate-900">98%</span></div>
+                                <div className="p-6 flex items-center justify-between"><span className="text-slate-600 font-medium">Avg. Rating</span><div className="flex items-center gap-1"><span className="text-2xl font-bold text-slate-900">{mentor.averageRating?.toFixed(1) || "0.0"}</span><Star className="w-4 h-4 text-amber-500 fill-amber-500" /></div></div>
+                                <div className="p-6 flex items-center justify-between"><span className="text-slate-600 font-medium">Positive Reviews</span><span className="text-2xl font-bold text-slate-900">{mentor.totalReviews > 0 ? `${mentor.positiveReviews}%` : "No reviews"}</span></div>
                             </div>
                         </CardContent>
                     </Card>
