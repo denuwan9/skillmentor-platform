@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "./ui/calendar";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,7 @@ interface SchedulingModalProps {
   isOpen: boolean;
   onClose: () => void;
   mentor: Mentor;
+  selectedSubject?: any;
 }
 
 const TIME_SLOTS = [
@@ -32,13 +33,14 @@ export function SchedulingModal({
   isOpen,
   onClose,
   mentor,
+  selectedSubject,
 }: SchedulingModalProps) {
   const [date, setDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>();
   const navigate = useNavigate();
 
   const mentorName = `${mentor.firstName} ${mentor.lastName}`;
-  const subject = mentor.subjects[0];
+  const subject = selectedSubject || mentor.subjects?.[0];
 
   const handleSchedule = () => {
     if (date && selectedTime && subject) {
@@ -54,7 +56,7 @@ export function SchedulingModal({
         date: sessionDateTime.toISOString(),
         courseTitle: subject?.subjectName ?? "",
         mentorName: mentorName,
-        mentorId: mentor.mentorId,
+        mentorId: String(mentor.id),
         mentorImg: mentor.profileImageUrl ?? "",
         subjectId: String(subject?.id ?? ""),
       });

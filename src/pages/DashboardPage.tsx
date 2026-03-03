@@ -62,15 +62,17 @@ export default function DashboardPage() {
         {enrollments.map((enrollment) => (
           <div
             key={enrollment.id}
-            className="rounded-2xl p-6 relative overflow-hidden bg-linear-to-br from-blue-500 to-blue-600"
+            className="rounded-2xl p-4 sm:p-6 relative overflow-hidden bg-linear-to-br from-blue-500 to-blue-600"
           >
             {/* Status Pill */}
             <div className="absolute top-4 right-4">
-              <StatusPill status={enrollment.paymentStatus} />
+              <StatusPill
+                status={enrollment.sessionStatus === "completed" ? "completed" : enrollment.paymentStatus}
+              />
             </div>
 
             {/* Profile Image */}
-            <div className="size-24 rounded-full bg-white/10 mb-4">
+            <div className="size-20 sm:size-24 rounded-full bg-white/10 mb-4">
               {enrollment.mentorProfileImageUrl ? (
                 <img
                   src={enrollment.mentorProfileImageUrl}
