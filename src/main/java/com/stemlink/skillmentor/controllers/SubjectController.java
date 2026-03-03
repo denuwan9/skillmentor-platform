@@ -57,4 +57,10 @@ public class SubjectController extends AbstractController {
     public void deleteSubject(@PathVariable Long id) {
         subjectService.deleteSubject(id);
     }
+
+    @GetMapping("/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Subject> getSubjectStats() {
+        return subjectService.getAllSubjects();
+    }
 }

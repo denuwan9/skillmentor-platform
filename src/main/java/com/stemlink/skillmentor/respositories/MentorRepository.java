@@ -18,4 +18,8 @@ public interface MentorRepository extends JpaRepository<Mentor, Long> {
     Optional<Mentor> findByEmail(String email);
 
     Optional<Mentor> findByMentorId(String mentorId);
+
+    // Eagerly joins subjects so the profile page never gets an empty list
+    @Query("SELECT m FROM Mentor m LEFT JOIN FETCH m.subjects WHERE m.id = :id")
+    Optional<Mentor> findByIdWithSubjects(@Param("id") Long id);
 }

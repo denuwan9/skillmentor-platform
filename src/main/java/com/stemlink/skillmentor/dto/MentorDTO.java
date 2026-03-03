@@ -9,7 +9,8 @@ import lombok.Data;
 public class MentorDTO {
 
     // Admin-only override fields — if provided by an ADMIN caller, these are used
-    // directly instead of extracting identity from the JWT claims. Ignored for MENTOR role.
+    // directly instead of extracting identity from the JWT claims. Ignored for
+    // MENTOR role.
     private String mentorId;
 
     @Size(max = 100, message = "First name must not exceed 100 characters")
@@ -47,6 +48,27 @@ public class MentorDTO {
 
     private Boolean isCertified;
 
+    private Double averageRating;
+
+    private Integer totalReviews;
+
+    private java.util.List<ReviewDTO> reviews;
+
     @Size(max = 10, message = "Start year must not exceed 10 characters")
     private String startYear;
+
+    private java.util.List<String> experienceHighlights;
+    private java.util.List<String> skills;
+
+    // Subject info for the Subjects Taught tab on the profile page
+    private java.util.List<SubjectDTO> subjects;
+
+    @lombok.Data
+    public static class SubjectDTO {
+        private Long id;
+        private String subjectName;
+        private String description;
+        private String courseImageUrl;
+        private Integer enrollmentCount;
+    }
 }

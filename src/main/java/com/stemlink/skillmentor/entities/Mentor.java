@@ -60,16 +60,32 @@ public class Mentor implements Serializable {
     private String profileImageUrl;
 
     @Column(name = "positive_reviews")
-    private Integer positiveReviews;
+    private Integer positiveReviews = 0;
 
     @Column(name = "total_enrollments")
-    private Integer totalEnrollments;
+    private Integer totalEnrollments = 0;
 
     @Column(name = "is_certified")
     private Boolean isCertified;
 
+    @Column(name = "average_rating")
+    private Double averageRating = 0.0;
+
+    @Column(name = "total_reviews")
+    private Integer totalReviews = 0;
+
     @Column(name = "start_year", length = 10)
     private String startYear;
+
+    @ElementCollection
+    @CollectionTable(name = "mentor_experience_highlights", joinColumns = @JoinColumn(name = "mentor_id"))
+    @Column(name = "highlight")
+    private List<String> experienceHighlights;
+
+    @ElementCollection
+    @CollectionTable(name = "mentor_skills", joinColumns = @JoinColumn(name = "mentor_id"))
+    @Column(name = "skill")
+    private List<String> skills;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

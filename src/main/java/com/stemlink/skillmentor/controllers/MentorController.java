@@ -60,6 +60,44 @@ public class MentorController extends AbstractController {
         return sendOkResponse(mentor);
     }
 
+    @GetMapping("{id}/profile")
+    public ResponseEntity<MentorDTO> getPublicProfile(@PathVariable Long id) {
+        Mentor mentor = mentorService.getMentorProfile(id);
+        MentorDTO mentorDTO = modelMapper.map(mentor, MentorDTO.class);
+
+        // Manually map subjects — ModelMapper cannot auto-map entity → inner-class DTO
+        if (mentor.getSubjects() != null) {
+            java.util.List<MentorDTO.SubjectDTO> subjectDTOs = mentor.getSubjects().stream()
+                    .map(s -> {
+                        MentorDTO.SubjectDTO dto = new MentorDTO.SubjectDTO();
+                        dto.setId(s.getId());
+                        dto.setSubjectName(s.getSubjectName());
+                        dto.setDescription(s.getDescription());
+                        dto.setCourseImageUrl(s.getCourseImageUrl());
+                        dto.setEnrollmentCount(s.getEnrollmentCount());
+                        return dto;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            mentorDTO.setSubjects(subjectDTOs);
+        }
+
+        // Map reviews from sessions
+        if (mentor.getSessions() != null) {
+            java.util.List<com.stemlink.skillmentor.dto.ReviewDTO> reviews = mentor.getSessions().stream()
+                    .filter(s -> s.getStudentRating() != null)
+                    .map(s -> com.stemlink.skillmentor.dto.ReviewDTO.builder()
+                            .studentName(s.getStudent().getFirstName() + " " + s.getStudent().getLastName())
+                            .reviewText(s.getStudentReview())
+                            .rating(s.getStudentRating())
+                            .createdAt(s.getCreatedAt())
+                            .build())
+                    .collect(java.util.stream.Collectors.toList());
+            mentorDTO.setReviews(reviews);
+        }
+
+        return sendOkResponse(mentorDTO);
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('" + ROLE_ADMIN + "', '" + ROLE_MENTOR + "')")
     public ResponseEntity<Mentor> createMentor(@Valid @RequestBody MentorDTO mentorDTO, Authentication authentication) {
@@ -107,6 +145,13 @@ public class MentorController extends AbstractController {
     @PreAuthorize("hasAnyRole('" + ROLE_ADMIN + "')")
     public ResponseEntity<Mentor> deleteMentor(@PathVariable Long id) {
         mentorService.deleteMentor(id);
+        return sendNoContentResponse();
+    }
+
+    @PostMapping("/sync-stats")
+    @PreAuthorize("hasRole('" + ROLE_ADMIN + "')")
+    public ResponseEntity<Void> syncStats() {
+        mentorService.syncAllMentorStats();
         return sendNoContentResponse();
     }
 }

@@ -73,10 +73,7 @@ public class SessionController extends AbstractController {
                     org.springframework.http.HttpStatus.FORBIDDEN);
         }
 
-        session.setStudentReview(reviewDTO.getStudentReview());
-        session.setStudentRating(reviewDTO.getStudentRating());
-
-        Session updated = sessionService.updateSessionById(id, reviewDTO);
+        Session updated = sessionService.submitReview(id, reviewDTO.getStudentRating(), reviewDTO.getStudentReview());
         return sendOkResponse(toSessionResponseDTO(updated));
     }
 

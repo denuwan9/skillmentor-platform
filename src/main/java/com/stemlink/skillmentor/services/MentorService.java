@@ -8,8 +8,16 @@ import java.util.List;
 
 public interface MentorService {
     Mentor createNewMentor(Mentor mentor);
+
     Page<Mentor> getAllMentors(String name, Pageable pageable);
+
     Mentor getMentorById(Long id);
+
     Mentor updateMentorById(Long id, Mentor updatedMentor);
+
     void deleteMentor(Long id);
+
+    Mentor getMentorProfile(Long id);
+
+    void syncAllMentorStats();
 }

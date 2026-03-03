@@ -17,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -33,6 +35,9 @@ public class SessionServiceImpl implements SessionService {
     private final SubjectRepository subjectRepository;
     private final ModelMapper modelMapper;
 
+    @Override
+    @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public Session createNewSession(SessionDTO sessionDTO) {
         // Fetch the related entities by their IDs
         try {
@@ -50,23 +55,17 @@ public class SessionServiceImpl implements SessionService {
             ValidationUtils.validateStudentAvailability(student, sessionDTO.getSessionAt(),
                     sessionDTO.getDurationMinutes());
 
-            // Create and populate the Session entity
-            // Session session = new Session();
-            // session.setSessionAt(sessionDTO.getSessionAt());
-            // session.setDurationMinutes(sessionDTO.getDurationMinutes());
-            // session.setSessionStatus(sessionDTO.getSessionStatus());
-            // session.setMeetingLink(sessionDTO.getMeetingLink());
-            // session.setSessionNotes(sessionDTO.getSessionNotes());
-            // session.setStudentReview(sessionDTO.getStudentReview());
-            // session.setStudentRating(sessionDTO.getStudentRating());
-
             // using model mapper
             Session session = modelMapper.map(sessionDTO, Session.class);
             session.setStudent(student);
             session.setMentor(mentor);
             session.setSubject(subject);
 
-            return sessionRepository.save(session);
+            Session savedSession = sessionRepository.save(session);
+            sessionRepository.flush(); // Ensure DB sees the new session for counts
+            updateMentorStats(mentor.getId());
+            updateSubjectStats(subject.getId());
+            return savedSession;
         } catch (SkillMentorException skillMentorException) {
             log.error("Dependencies not found to map: {}, Failed to create new session",
                     skillMentorException.getMessage());
@@ -75,7 +74,6 @@ public class SessionServiceImpl implements SessionService {
             log.error("Failed to create session", exception);
             throw new SkillMentorException("Failed to create new session", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
     public List<Session> getAllSessions() {
@@ -83,11 +81,16 @@ public class SessionServiceImpl implements SessionService {
     }
 
     public Session getSessionById(Long id) {
-        return sessionRepository.findById(id).get();
+        return sessionRepository.findById(id).orElseThrow(
+                () -> new SkillMentorException("Session not found", HttpStatus.NOT_FOUND));
     }
 
+    @Override
+    @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public Session updateSessionById(Long id, SessionDTO updatedSessionDTO) {
-        Session session = sessionRepository.findById(id).get();
+        Session session = sessionRepository.findById(id).orElseThrow(
+                () -> new SkillMentorException("Session not found", HttpStatus.NOT_FOUND));
 
         // source -> destination
         modelMapper.map(updatedSessionDTO, session);
@@ -108,34 +111,28 @@ public class SessionServiceImpl implements SessionService {
             session.setSubject(subject);
         }
 
-        // // Update other fields
-        // if (updatedSessionDTO.getSessionAt() != null) {
-        // session.setSessionAt(updatedSessionDTO.getSessionAt());
-        // }
-        // if (updatedSessionDTO.getDurationMinutes() != null) {
-        // session.setDurationMinutes(updatedSessionDTO.getDurationMinutes());
-        // }
-        // if (updatedSessionDTO.getSessionStatus() != null) {
-        // session.setSessionStatus(updatedSessionDTO.getSessionStatus());
-        // }
-        // if (updatedSessionDTO.getMeetingLink() != null) {
-        // session.setMeetingLink(updatedSessionDTO.getMeetingLink());
-        // }
-        // if (updatedSessionDTO.getSessionNotes() != null) {
-        // session.setSessionNotes(updatedSessionDTO.getSessionNotes());
-        // }
-        // if (updatedSessionDTO.getStudentReview() != null) {
-        // session.setStudentReview(updatedSessionDTO.getStudentReview());
-        // }
-        // if (updatedSessionDTO.getStudentRating() != null) {
-        // session.setStudentRating(updatedSessionDTO.getStudentRating());
-        // }
-
-        return sessionRepository.save(session);
+        Session savedSession = sessionRepository.save(session);
+        sessionRepository.flush();
+        updateMentorStats(session.getMentor().getId());
+        updateSubjectStats(session.getSubject().getId());
+        return savedSession;
     }
 
+    @Override
+    @CacheEvict(value = "mentors", allEntries = true)
     public void deleteSession(Long id) {
-        sessionRepository.deleteById(id);
+        Session session = sessionRepository.findById(id).orElse(null);
+        if (session != null) {
+            Long mentorId = session.getMentor().getId();
+            Long subjectId = session.getSubject().getId();
+
+            sessionRepository.deleteById(id);
+            sessionRepository.flush();
+
+            // Recalculate stats using helpers
+            updateMentorStats(mentorId);
+            updateSubjectStats(subjectId);
+        }
     }
 
     @Override
@@ -159,6 +156,9 @@ public class SessionServiceImpl implements SessionService {
         return sessionRepository.save(session);
     }
 
+    @Override
+    @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public Session enrollSession(UserPrincipal userPrincipal, SessionDTO sessionDTO) {
         // Find student by email from JWT, or auto-create user on first enrollment
         Student student = studentRepository.findByEmail(userPrincipal.getEmail())
@@ -196,11 +196,71 @@ public class SessionServiceImpl implements SessionService {
         session.setSessionStatus("scheduled");
         session.setPaymentStatus("pending");
 
-        return sessionRepository.save(session);
+        Session savedSession = sessionRepository.save(session);
+        sessionRepository.flush();
+        updateMentorStats(mentor.getId());
+        updateSubjectStats(subject.getId());
+
+        return savedSession;
     }
 
     public List<Session> getSessionsByStudentEmail(String email) {
         return sessionRepository.findByStudent_Email(email);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
+    public Session submitReview(Long sessionId, Integer rating, String reviewText) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new SkillMentorException("Session not found", HttpStatus.NOT_FOUND));
+
+        if (!"completed".equalsIgnoreCase(session.getSessionStatus())) {
+            throw new SkillMentorException("Can only review completed sessions", HttpStatus.BAD_REQUEST);
+        }
+
+        session.setStudentRating(rating);
+        session.setStudentReview(reviewText);
+        Session savedSession = sessionRepository.save(session);
+
+        // Update mentor stats after review
+        updateMentorStats(session.getMentor().getId());
+
+        return savedSession;
+    }
+
+    private void updateMentorStats(Long mentorId) {
+        Mentor mentor = mentorRepository.findById(mentorId).orElse(null);
+        if (mentor == null)
+            return;
+
+        Double avgRating = sessionRepository.getAverageRatingByMentorId(mentorId);
+        long totalReviews = sessionRepository.countTotalReviewsByMentorId(mentorId);
+        long positiveReviewsCount = sessionRepository.countPositiveReviewsByMentorId(mentorId);
+        long totalEnrollments = sessionRepository.countTotalSessionsByMentorId(mentorId); // Use total bookings
+
+        mentor.setAverageRating(avgRating != null ? avgRating : 0.0);
+        mentor.setTotalReviews((int) totalReviews);
+        mentor.setTotalEnrollments((int) totalEnrollments);
+
+        if (totalReviews > 0) {
+            int positivePercentage = (int) ((positiveReviewsCount * 100) / totalReviews);
+            mentor.setPositiveReviews(positivePercentage);
+        } else {
+            mentor.setPositiveReviews(0);
+        }
+
+        mentorRepository.save(mentor);
+    }
+
+    private void updateSubjectStats(Long subjectId) {
+        Subject subject = subjectRepository.findById(subjectId).orElse(null);
+        if (subject == null)
+            return;
+
+        long subjectEnrollments = subjectRepository.countEnrollmentsBySubjectId(subjectId);
+        subject.setEnrollmentCount((int) subjectEnrollments);
+        subjectRepository.save(subject);
     }
 
 }

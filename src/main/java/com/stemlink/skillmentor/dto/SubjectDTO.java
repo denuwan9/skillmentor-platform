@@ -17,4 +17,6 @@ public class SubjectDTO {
 
     @NotNull
     private Long mentorId;
+
+    private Integer enrollmentCount;
 }

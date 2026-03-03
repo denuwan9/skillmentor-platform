@@ -8,9 +8,9 @@ import com.stemlink.skillmentor.services.SubjectService;
 import com.stemlink.skillmentor.exceptions.SkillMentorException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,7 +22,6 @@ public class SubjectServiceImpl implements SubjectService {
 
     private final SubjectRepository subjectRepository;
     private final MentorRepository mentorRepository;
-    private final ModelMapper modelMapper;
 
     public List<Subject> getAllSubjects() {
         try {
@@ -33,6 +32,7 @@ public class SubjectServiceImpl implements SubjectService {
         }
     }
 
+    @CacheEvict(value = "mentors", allEntries = true)
     public Subject addNewSubject(Long mentorId, Subject subject) {
         try {
             log.info("Attempting to add new subject with lead mentor ID: {}", mentorId);
@@ -61,11 +61,27 @@ public class SubjectServiceImpl implements SubjectService {
                 () -> new SkillMentorException("Subject not found", HttpStatus.NOT_FOUND));
     }
 
+    @CacheEvict(value = "mentors", allEntries = true)
     public Subject updateSubjectById(Long id, Subject updatedSubject) {
         try {
             Subject subject = subjectRepository.findById(id).orElseThrow(
                     () -> new SkillMentorException("Subject not found", HttpStatus.NOT_FOUND));
-            modelMapper.map(updatedSubject, subject);
+
+            // Basic field updates
+            subject.setSubjectName(updatedSubject.getSubjectName());
+            subject.setDescription(updatedSubject.getDescription());
+            if (updatedSubject.getCourseImageUrl() != null) {
+                subject.setCourseImageUrl(updatedSubject.getCourseImageUrl());
+            }
+
+            // Handle Mentor update if mentor ID is provided (via mapped entity)
+            if (updatedSubject.getMentor() != null && updatedSubject.getMentor().getId() != null) {
+                Long mentorId = updatedSubject.getMentor().getId();
+                Mentor mentor = mentorRepository.findById(mentorId).orElseThrow(
+                        () -> new SkillMentorException("Mentor not found with ID: " + mentorId, HttpStatus.NOT_FOUND));
+                subject.setMentor(mentor);
+            }
+
             return subjectRepository.save(subject);
         } catch (SkillMentorException e) {
             throw e;
@@ -78,6 +94,7 @@ public class SubjectServiceImpl implements SubjectService {
         }
     }
 
+    @CacheEvict(value = "mentors", allEntries = true)
     public void deleteSubject(Long id) {
         try {
             subjectRepository.deleteById(id);

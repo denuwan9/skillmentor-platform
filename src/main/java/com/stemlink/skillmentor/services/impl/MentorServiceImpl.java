@@ -3,6 +3,8 @@ package com.stemlink.skillmentor.services.impl;
 import com.stemlink.skillmentor.entities.Mentor;
 import com.stemlink.skillmentor.exceptions.SkillMentorException;
 import com.stemlink.skillmentor.respositories.MentorRepository;
+import com.stemlink.skillmentor.respositories.SessionRepository;
+import com.stemlink.skillmentor.respositories.SubjectRepository;
 import com.stemlink.skillmentor.services.MentorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 public class MentorServiceImpl implements MentorService {
 
     private final MentorRepository mentorRepository;
+    private final SessionRepository sessionRepository;
+    private final SubjectRepository subjectRepository;
     private final ModelMapper modelMapper;
 
     @CacheEvict(value = "mentors", allEntries = true)
@@ -105,4 +109,51 @@ public class MentorServiceImpl implements MentorService {
         }
     }
 
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Mentor getMentorProfile(Long id) {
+        // Use JOIN FETCH query to eagerly load subjects in a single DB call.
+        // We do NOT reuse getMentorById() here because that method is @Cacheable
+        // and may return a cached entity whose lazy 'subjects' collection is
+        // already detached and will deserialize as empty.
+        return mentorRepository.findByIdWithSubjects(id)
+                .orElseThrow(() -> new SkillMentorException("Mentor Not found", HttpStatus.NOT_FOUND));
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
+    public void syncAllMentorStats() {
+        log.info("Starting synchronization of all mentor and subject statistics...");
+
+        java.util.List<Mentor> mentors = mentorRepository.findAll();
+        for (Mentor mentor : mentors) {
+            Double avgRating = sessionRepository.getAverageRatingByMentorId(mentor.getId());
+            long totalReviews = sessionRepository.countTotalReviewsByMentorId(mentor.getId());
+            long positiveReviewsCount = sessionRepository.countPositiveReviewsByMentorId(mentor.getId());
+            long totalEnrollments = sessionRepository.countTotalSessionsByMentorId(mentor.getId());
+
+            mentor.setAverageRating(avgRating != null ? avgRating : 0.0);
+            mentor.setTotalReviews((int) totalReviews);
+            mentor.setTotalEnrollments((int) totalEnrollments);
+
+            if (totalReviews > 0) {
+                int positivePercentage = (int) ((positiveReviewsCount * 100) / totalReviews);
+                mentor.setPositiveReviews(positivePercentage);
+            } else {
+                mentor.setPositiveReviews(0);
+            }
+            mentorRepository.save(mentor);
+            log.debug("Synced stats for mentor: {}", mentor.getLastName());
+        }
+
+        java.util.List<com.stemlink.skillmentor.entities.Subject> subjects = subjectRepository.findAll();
+        for (com.stemlink.skillmentor.entities.Subject subject : subjects) {
+            long subjectEnrollments = subjectRepository.countEnrollmentsBySubjectId(subject.getId());
+            subject.setEnrollmentCount((int) subjectEnrollments);
+            subjectRepository.save(subject);
+        }
+        log.info("Successfully synchronized statistics for {} mentors and {} subjects.", mentors.size(),
+                subjects.size());
+    }
 }

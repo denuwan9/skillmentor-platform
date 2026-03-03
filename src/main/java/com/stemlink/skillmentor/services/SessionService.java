@@ -29,4 +29,6 @@ public interface SessionService {
     Session enrollSession(UserPrincipal userPrincipal, SessionDTO sessionDTO);
 
     List<Session> getSessionsByStudentEmail(String email);
+
+    Session submitReview(Long sessionId, Integer rating, String review);
 }

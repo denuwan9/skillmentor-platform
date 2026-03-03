@@ -1,6 +1,5 @@
 package com.stemlink.skillmentor.entities;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,6 +30,9 @@ public class Subject implements Serializable {
 
     @Column(name = "course_image_url")
     private String courseImageUrl;
+
+    @Column(name = "enrollment_count")
+    private Integer enrollmentCount = 0;
 
     // --------- Relationship -------------
     @ManyToOne(fetch = FetchType.LAZY)
