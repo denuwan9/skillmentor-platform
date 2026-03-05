@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   Menu
 } from "lucide-react";
+import logo from "@/assets/logo.webp";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -43,9 +44,7 @@ const AdminLayout = () => {
     <>
       <div className="p-6 border-b">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <span className="text-white font-bold">S</span>
-          </div>
+          <img src={logo} alt="SkillMentor Logo" className="w-8 h-8 rounded-lg object-contain" />
           <span className="font-bold text-xl tracking-tight">SkillMentor</span>
         </Link>
         <p className="text-xs font-medium text-slate-500 mt-1 uppercase tracking-wider">Admin Portal</p>

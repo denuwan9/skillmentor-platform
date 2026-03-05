@@ -133,16 +133,6 @@ const AdminDashboardPage = () => {
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Admin Overview</h1>
                     <p className="text-slate-500 mt-1">Real-time metrics and system health indicators.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex -space-x-2">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                                {String.fromCharCode(64 + i)}
-                            </div>
-                        ))}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Active Admins</span>
-                </div>
             </div>
 
             {/* Stats Grid */}
