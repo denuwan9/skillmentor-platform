@@ -36,7 +36,18 @@ public class AdminController extends AbstractController {
 
     @PutMapping("/bookings/{id}/meeting-link")
     public ResponseEntity<Session> addMeetingLink(@PathVariable Long id, @RequestBody String meetingLink) {
+        // Remove literal double quotes if present (sometimes sent by frontend
+        // JSON.stringify)
+        if (meetingLink != null && meetingLink.startsWith("\"") && meetingLink.endsWith("\"")) {
+            meetingLink = meetingLink.substring(1, meetingLink.length() - 1);
+        }
         Session updated = sessionService.updateMeetingLink(id, meetingLink);
         return sendOkResponse(updated);
+    }
+
+    @DeleteMapping("/bookings/{id}")
+    public ResponseEntity<Void> deleteBooking(@PathVariable Long id) {
+        sessionService.deleteSession(id);
+        return sendNoContentResponse();
     }
 }

@@ -1,6 +1,5 @@
 package com.stemlink.skillmentor.controllers;
 
-
 import com.stemlink.skillmentor.dto.StudentDTO;
 import com.stemlink.skillmentor.entities.Student;
 import com.stemlink.skillmentor.services.StudentService;
@@ -24,7 +23,7 @@ import static com.stemlink.skillmentor.constants.UserRoles.*;
 @RequiredArgsConstructor
 @Validated
 @PreAuthorize("isAuthenticated()")
-public class StudentController extends AbstractController{
+public class StudentController extends AbstractController {
 
     private final StudentService studentService;
     private final ModelMapper modelMapper;
@@ -36,14 +35,15 @@ public class StudentController extends AbstractController{
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<Student> getStudentById(@PathVariable Integer id) {
+    public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
         Student student = studentService.getStudentById(id);
         return sendOkResponse(student);
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('" + ROLE_ADMIN + "', '" + ROLE_STUDENT + "')")
-    public ResponseEntity<Student> createStudent(@Valid @RequestBody StudentDTO studentDTO, Authentication authentication) {
+    public ResponseEntity<Student> createStudent(@Valid @RequestBody StudentDTO studentDTO,
+            Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
         Student student = modelMapper.map(studentDTO, Student.class);
@@ -58,7 +58,8 @@ public class StudentController extends AbstractController{
 
     @PutMapping("{id}")
     @PreAuthorize("hasAnyRole('" + ROLE_ADMIN + "', '" + ROLE_STUDENT + "')")
-    public ResponseEntity<Student> updateStudent(@PathVariable Integer id, @Valid @RequestBody StudentDTO updatedStudentDTO) {
+    public ResponseEntity<Student> updateStudent(@PathVariable Long id,
+            @Valid @RequestBody StudentDTO updatedStudentDTO) {
         Student student = modelMapper.map(updatedStudentDTO, Student.class);
         Student updatedStudent = studentService.updateStudentById(id, student);
         return sendOkResponse(updatedStudent);
@@ -66,7 +67,7 @@ public class StudentController extends AbstractController{
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasAnyRole('" + ROLE_ADMIN + "')")
-    public ResponseEntity<Void> deleteStudent(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
         studentService.deleteStudent(id);
         return sendNoContentResponse();
     }

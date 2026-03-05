@@ -4,14 +4,17 @@ import com.stemlink.skillmentor.entities.Mentor;
 import com.stemlink.skillmentor.entities.Subject;
 import com.stemlink.skillmentor.respositories.MentorRepository;
 import com.stemlink.skillmentor.respositories.SubjectRepository;
+import com.stemlink.skillmentor.respositories.SessionRepository;
+import com.stemlink.skillmentor.services.MentorService;
 import com.stemlink.skillmentor.services.SubjectService;
 import com.stemlink.skillmentor.exceptions.SkillMentorException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,6 +25,8 @@ public class SubjectServiceImpl implements SubjectService {
 
     private final SubjectRepository subjectRepository;
     private final MentorRepository mentorRepository;
+    private final SessionRepository sessionRepository;
+    private final MentorService mentorService;
 
     public List<Subject> getAllSubjects() {
         try {
@@ -94,13 +99,30 @@ public class SubjectServiceImpl implements SubjectService {
         }
     }
 
+    @Override
+    @Transactional
     @CacheEvict(value = "mentors", allEntries = true)
     public void deleteSubject(Long id) {
         try {
+            log.info("Attempting to delete subject with ID: {}", id);
+
+            // 1. Delete all associated sessions first to avoid foreign key constraints
+            log.info("Deleting all sessions associated with subject: {}", id);
+            sessionRepository.deleteBySubjectId(id);
+
+            // 2. Delete the subject itself
             subjectRepository.deleteById(id);
+            subjectRepository.flush();
+
+            // 3. Sync mentor stats as the enrollment counts and ratings might have changed
+            log.info("Triggering background stats sync after subject deletion");
+            mentorService.syncAllMentorStats();
+
+            log.info("Successfully deleted subject {} and all related bookings", id);
         } catch (Exception exception) {
             log.error("Failed to delete subject with id {}", id, exception);
-            throw new SkillMentorException("Failed to delete subject", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new SkillMentorException("Failed to delete subject due to database constraints or server error",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

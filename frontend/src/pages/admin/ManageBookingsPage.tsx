@@ -17,7 +17,8 @@ import {
     ChevronLeft,
     ChevronRight,
     ArrowUpDown,
-    Clock
+    Clock,
+    Trash2
 } from "lucide-react";
 import {
     Dialog,
@@ -52,6 +53,7 @@ const ManageBookingsPage = () => {
 
     // Dialog State
     const [isLinkDialogOpen, setIsLinkDialogOpen] = React.useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
     const [selectedBooking, setSelectedBooking] = React.useState<any>(null);
     const [meetingLink, setMeetingLink] = React.useState("");
 
@@ -110,13 +112,15 @@ const ManageBookingsPage = () => {
                 toast.error("You must be logged in to perform this action.");
                 return;
             }
+
+            const isLink = type === "link";
             const res = await fetch(`http://localhost:8081/api/v1/admin/bookings/${id}/${endpoint}`, {
                 method: method,
                 headers: {
                     "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
+                    "Content-Type": isLink ? "text/plain" : "application/json"
                 },
-                body: body ? JSON.stringify(body) : undefined
+                body: isLink ? body : (body ? JSON.stringify(body) : undefined)
             });
 
             if (res.ok) {
@@ -129,6 +133,33 @@ const ManageBookingsPage = () => {
             }
         } catch (err) {
             console.error(`Failed to update ${type}:`, err);
+            toast.error("A network error occurred.");
+        }
+    };
+
+    const handleDeleteBooking = async (id: number) => {
+        try {
+            const token = await getToken({ template: "skillmentor-auth" });
+            if (!token) {
+                toast.error("Authentication required.");
+                return;
+            }
+            const res = await fetch(`http://localhost:8081/api/v1/admin/bookings/${id}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (res.status === 204) {
+                setBookings(prev => prev.filter(b => b.id !== id));
+                toast.success("Booking deleted successfully.");
+                setIsDeleteDialogOpen(false);
+            } else {
+                toast.error("Failed to delete booking.");
+            }
+        } catch (err) {
+            console.error("Delete error:", err);
             toast.error("A network error occurred.");
         }
     };
@@ -326,7 +357,15 @@ const ManageBookingsPage = () => {
                                                     </Button>
                                                 </>
                                             )}
-                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                                onClick={() => {
+                                                    setSelectedBooking(booking);
+                                                    setIsDeleteDialogOpen(true);
+                                                }}
+                                            >
                                                 <MoreVertical className="w-4 h-4" />
                                             </Button>
                                         </div>
@@ -391,6 +430,36 @@ const ManageBookingsPage = () => {
                             <Button variant="outline" onClick={() => setIsLinkDialogOpen(false)}>Cancel</Button>
                             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => handleUpdateStatus(selectedBooking?.id, "link", meetingLink)}>
                                 Save Link
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Delete Confirmation Dialog */}
+                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2 text-red-600">
+                                <Trash2 className="w-5 h-5" />
+                                Confirm Deletion
+                            </DialogTitle>
+                            <div className="text-sm text-slate-500 mt-2">
+                                <p>Are you sure you want to delete this booking? This action cannot be undone.</p>
+                                <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs space-y-1">
+                                    <div className="flex gap-2"><span className="font-semibold w-16">ID:</span> <span className="text-slate-600">#{selectedBooking?.id}</span></div>
+                                    <div className="flex gap-2"><span className="font-semibold w-16">Student:</span> <span className="text-slate-600">{selectedBooking?.student?.firstName} {selectedBooking?.student?.lastName}</span></div>
+                                    <div className="flex gap-2"><span className="font-semibold w-16">Course:</span> <span className="text-slate-600">{selectedBooking?.subject?.subjectName}</span></div>
+                                </div>
+                            </div>
+                        </DialogHeader>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => handleDeleteBooking(selectedBooking?.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                            >
+                                Delete Booking
                             </Button>
                         </DialogFooter>
                     </DialogContent>

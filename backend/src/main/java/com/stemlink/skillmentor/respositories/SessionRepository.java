@@ -24,4 +24,8 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) FROM Session s WHERE s.mentor.id = :mentorId AND s.studentRating IS NOT NULL")
     long countTotalReviewsByMentorId(@org.springframework.data.repository.query.Param("mentorId") Long mentorId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Session s WHERE s.subject.id = :subjectId")
+    void deleteBySubjectId(@org.springframework.data.repository.query.Param("subjectId") Long subjectId);
 }

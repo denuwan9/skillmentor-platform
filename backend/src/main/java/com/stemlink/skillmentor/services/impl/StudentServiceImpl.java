@@ -22,7 +22,7 @@ public class StudentServiceImpl implements StudentService {
     private final ModelMapper modelMapper;
 
     public Student createNewStudent(Student student) {
-        try {       
+        try {
             return studentRepository.save(student);
         } catch (DataIntegrityViolationException e) {
             log.error("Data integrity violation while creating student: {}", e.getMessage());
@@ -43,17 +43,15 @@ public class StudentServiceImpl implements StudentService {
         }
     }
 
-    public Student getStudentById(Integer id) {
+    public Student getStudentById(Long id) {
         return studentRepository.findById(id).orElseThrow(
-                () -> new SkillMentorException("Student not found", HttpStatus.NOT_FOUND)
-        );
+                () -> new SkillMentorException("Student not found", HttpStatus.NOT_FOUND));
     }
 
-    public Student updateStudentById(Integer id, Student updatedStudent) {
+    public Student updateStudentById(Long id, Student updatedStudent) {
         try {
             Student student = studentRepository.findById(id).orElseThrow(
-                    () -> new SkillMentorException("Student not found", HttpStatus.NOT_FOUND)
-            );
+                    () -> new SkillMentorException("Student not found", HttpStatus.NOT_FOUND));
             modelMapper.map(updatedStudent, student);
             return studentRepository.save(student);
         } catch (SkillMentorException e) {
@@ -64,7 +62,7 @@ public class StudentServiceImpl implements StudentService {
         }
     }
 
-    public void deleteStudent(Integer id) {
+    public void deleteStudent(Long id) {
         try {
             studentRepository.deleteById(id);
         } catch (Exception exception) {

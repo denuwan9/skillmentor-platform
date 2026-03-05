@@ -119,23 +119,39 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = "mentors", allEntries = true)
     public void deleteSession(Long id) {
-        Session session = sessionRepository.findById(id).orElse(null);
-        if (session != null) {
+        try {
+            log.info("Attempting to delete session with ID: {}", id);
+            Session session = sessionRepository.findById(id).orElseThrow(
+                    () -> new SkillMentorException("Session not found", HttpStatus.NOT_FOUND));
+
             Long mentorId = session.getMentor().getId();
             Long subjectId = session.getSubject().getId();
 
-            sessionRepository.deleteById(id);
+            // Use the entity itself for deletion to ensure Hibernate manages the state
+            // correctly
+            sessionRepository.delete(session);
             sessionRepository.flush();
 
             // Recalculate stats using helpers
             updateMentorStats(mentorId);
             updateSubjectStats(subjectId);
+            log.info("Successfully deleted session {} and updated stats for mentor {} and subject {}", id, mentorId,
+                    subjectId);
+        } catch (SkillMentorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to delete session with id: {}", id, e);
+            throw new SkillMentorException("Failed to delete booking due to server error: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public Session confirmPayment(Long id) {
         Session session = sessionRepository.findById(id).orElseThrow(() -> new RuntimeException("Session not found"));
         session.setPaymentStatus("confirmed");
@@ -143,6 +159,8 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public Session markComplete(Long id) {
         Session session = sessionRepository.findById(id).orElseThrow(() -> new RuntimeException("Session not found"));
         session.setSessionStatus("completed");
@@ -150,6 +168,8 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public Session updateMeetingLink(Long id, String meetingLink) {
         Session session = sessionRepository.findById(id).orElseThrow(() -> new RuntimeException("Session not found"));
         session.setMeetingLink(meetingLink);

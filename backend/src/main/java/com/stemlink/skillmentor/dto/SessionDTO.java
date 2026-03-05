@@ -10,7 +10,7 @@ import java.util.Date;
 public class SessionDTO {
 
     @NotNull(message = "Student ID cannot be null")
-    private Integer studentId;
+    private Long studentId;
 
     @NotNull(message = "Mentor ID cannot be null")
     private Long mentorId;

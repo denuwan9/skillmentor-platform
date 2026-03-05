@@ -5,7 +5,6 @@ import {
   BookOpen,
   LayoutDashboard,
   LogOut,
-  Settings,
   Users,
   CalendarCheck,
   Menu
@@ -114,13 +113,6 @@ const AdminLayout = () => {
             <h2 className="text-base md:text-lg font-semibold text-slate-800 truncate">Administrator Dashboard</h2>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </Button>
-            <Button variant="outline" size="icon" className="sm:hidden h-8 w-8">
-              <Settings className="w-4 h-4" />
-            </Button>
           </div>
         </header>
         <div className="p-4 md:p-8">
