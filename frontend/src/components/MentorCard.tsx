@@ -17,18 +17,20 @@ import { useAuth } from "@clerk/clerk-react";
 
 interface MentorCardProps {
   mentor: Mentor;
+  subject?: import("@/types").Subject;
 }
 
-export function MentorCard({ mentor }: MentorCardProps) {
+export function MentorCard({ mentor, subject }: MentorCardProps) {
   const [isSchedulingModalOpen, setIsSchedulingModalOpen] = useState(false);
   const [isSignupDialogOpen, setIsSignupDialogOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const { isSignedIn } = useAuth();
 
   const mentorName = `${mentor.firstName} ${mentor.lastName}`;
-  const hasSubjects = mentor.subjects.length > 0;
-  const courseTitle = mentor.subjects[0]?.subjectName ?? "";
-  const courseImageUrl = mentor.subjects[0]?.courseImageUrl ?? "";
+  const displaySubject = subject || mentor.subjects[0];
+  const hasSubjects = !!displaySubject;
+  const courseTitle = displaySubject?.subjectName ?? "";
+  const courseImageUrl = displaySubject?.courseImageUrl ?? "";
   const bio = mentor.bio ?? "";
   const bioTooLong = bio.length > 200;
 
@@ -120,7 +122,7 @@ export function MentorCard({ mentor }: MentorCardProps) {
               <div className="flex items-center space-x-2">
                 <GraduationCap className="w-4 h-4" />
                 <span className="text-sm">
-                  {mentor.subjects[0]?.enrollmentCount ?? mentor.totalEnrollments ?? 0} Enrollments
+                  {displaySubject?.enrollmentCount ?? mentor.totalEnrollments ?? 0} Enrollments
                 </span>
               </div>
 
@@ -155,6 +157,7 @@ export function MentorCard({ mentor }: MentorCardProps) {
         isOpen={isSchedulingModalOpen}
         onClose={() => setIsSchedulingModalOpen(false)}
         mentor={mentor}
+        selectedSubject={displaySubject}
       />
     </>
   );

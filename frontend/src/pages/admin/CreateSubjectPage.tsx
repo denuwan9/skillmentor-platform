@@ -325,6 +325,7 @@ const CreateSubjectPage = () => {
                                     <TableRow className="bg-slate-50/50">
                                         <TableHead>Subject</TableHead>
                                         <TableHead>Mentor</TableHead>
+                                        <TableHead>Enrollments</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -355,6 +356,11 @@ const CreateSubjectPage = () => {
                                                         {subject.mentor?.firstName} {subject.mentor?.lastName}
                                                     </span>
                                                 </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                                    {subject.enrollmentCount || 0}
+                                                </span>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">

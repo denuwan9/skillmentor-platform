@@ -10,9 +10,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useToast } from "@/components/hooks/use-toast";
 import { useAuth } from "@clerk/clerk-react";
 import { enrollInSession } from "@/lib/api";
+import { AlertCircle } from "lucide-react";
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -22,6 +31,17 @@ export default function PaymentPage() {
   const { getToken } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Error Modal State
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+  });
 
   const date = searchParams.get("date");
   const courseTitle = searchParams.get("courseTitle");
@@ -65,11 +85,15 @@ export default function PaymentPage() {
         navigate("/dashboard");
       }, 2000);
     } catch (error: any) {
-      toast({
-        title: "Booking Failed",
-        description: error.message || "There was a problem scheduling your session. Please try again.",
-        variant: "destructive",
+      console.error("Booking error details:", error);
+
+      // Show professional Alert Dialog for conflicts or other backend errors
+      setErrorModal({
+        isOpen: true,
+        title: "Booking Conflict",
+        description: error.message || "This time slot is no longer available or there was a conflict with your schedule. Please try a different time.",
       });
+
       setIsUploading(false);
     }
   };
@@ -121,6 +145,38 @@ export default function PaymentPage() {
           </CardFooter>
         </form>
       </Card>
+
+      {/* Error Conflict Modal */}
+      <Dialog open={errorModal.isOpen} onOpenChange={(open) => setErrorModal(prev => ({ ...prev, isOpen: open }))}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader className="flex flex-col items-center gap-2">
+            <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mb-2">
+              <AlertCircle className="w-6 h-6 text-rose-600" />
+            </div>
+            <DialogTitle className="text-xl text-center">{errorModal.title}</DialogTitle>
+            <DialogDescription className="text-center pt-2">
+              {errorModal.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setErrorModal(prev => ({ ...prev, isOpen: false }));
+                navigate(-1); // Go back to calendar
+              }}
+            >
+              Change Date/Time
+            </Button>
+            <Button
+              onClick={() => setErrorModal(prev => ({ ...prev, isOpen: false }))}
+              className="bg-slate-900"
+            >
+              Understood
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

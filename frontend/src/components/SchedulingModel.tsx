@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { Calendar } from "./ui/calendar";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +43,16 @@ export function SchedulingModal({
   const mentorName = `${mentor.firstName} ${mentor.lastName}`;
   const subject = selectedSubject || mentor.subjects?.[0];
 
+  // Logic to determine if a time slot is in the past
+  const isTimeInPast = (timeStr: string) => {
+    if (!date) return false;
+    const now = new Date();
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const slotDate = new Date(date);
+    slotDate.setHours(hours, minutes, 0, 0);
+    return slotDate < now;
+  };
+
   const handleSchedule = () => {
     if (date && selectedTime && subject) {
       const sessionDateTime = new Date(date);
@@ -49,6 +60,8 @@ export function SchedulingModal({
       sessionDateTime.setHours(
         Number.parseInt(hours),
         Number.parseInt(minutes),
+        0,
+        0
       );
 
       const sessionId = `${mentor.id}-${Date.now()}`;
@@ -63,6 +76,13 @@ export function SchedulingModal({
       navigate(`/payment/${sessionId}?${searchParams.toString()}`);
     }
   };
+
+  // Reset selected time if it becomes invalid when date changes
+  useEffect(() => {
+    if (selectedTime && isTimeInPast(selectedTime)) {
+      setSelectedTime(undefined);
+    }
+  }, [date]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -82,22 +102,34 @@ export function SchedulingModal({
               mode="single"
               selected={date}
               onSelect={setDate}
+              disabled={(date) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return date < today;
+              }}
               className="rounded-md border"
             />
           </div>
           <div>
             <h4 className="font-medium mb-2">Choose a time</h4>
             <div className="grid grid-cols-2 gap-2">
-              {TIME_SLOTS.map((time) => (
-                <Button
-                  key={time}
-                  variant={selectedTime === time ? "default" : "outline"}
-                  className="w-full"
-                  onClick={() => setSelectedTime(time)}
-                >
-                  {time}
-                </Button>
-              ))}
+              {TIME_SLOTS.map((time) => {
+                const isPast = isTimeInPast(time);
+                return (
+                  <Button
+                    key={time}
+                    variant={selectedTime === time ? "default" : "outline"}
+                    className={cn(
+                      "w-full",
+                      isPast && "opacity-50 cursor-not-allowed bg-slate-50 text-slate-400"
+                    )}
+                    onClick={() => !isPast && setSelectedTime(time)}
+                    disabled={isPast}
+                  >
+                    {time}
+                  </Button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -106,7 +138,7 @@ export function SchedulingModal({
             Cancel
           </Button>
           <Button onClick={handleSchedule} disabled={!date || !selectedTime || !subject}>
-            Save
+            Continue to Payment
           </Button>
         </div>
       </DialogContent>

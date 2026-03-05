@@ -14,8 +14,9 @@ public class ValidationUtils {
 
     /**
      * Validates if the mentor is available during the requested session time
-     * @param mentor The mentor entity
-     * @param sessionAt The session start time
+     * 
+     * @param mentor          The mentor entity
+     * @param sessionAt       The session start time
      * @param durationMinutes The session duration in minutes
      * @throws IllegalArgumentException if mentor is not available
      */
@@ -33,15 +34,17 @@ public class ValidationUtils {
 
             // Check for time overlap
             if (isTimeOverlap(sessionAt, sessionEnd, existingStart, existingEnd)) {
-                throw new SkillMentorException("Mentor is not available at the requested time", HttpStatus.CONFLICT);
+                throw new SkillMentorException("Mentor is already booked for a session during this time window.",
+                        HttpStatus.CONFLICT);
             }
         }
     }
 
     /**
      * Validates if the student is available during the requested session time
-     * @param student The student entity
-     * @param sessionAt The session start time
+     * 
+     * @param student         The student entity
+     * @param sessionAt       The session start time
      * @param durationMinutes The session duration in minutes
      * @throws IllegalArgumentException if student is not available
      */
@@ -59,7 +62,8 @@ public class ValidationUtils {
 
             // Check for time overlap
             if (isTimeOverlap(sessionAt, sessionEnd, existingStart, existingEnd)) {
-                throw new SkillMentorException("Student is not available at the requested time", HttpStatus.CONFLICT);
+                throw new SkillMentorException("You already have another session booked during this time window.",
+                        HttpStatus.CONFLICT);
             }
         }
     }

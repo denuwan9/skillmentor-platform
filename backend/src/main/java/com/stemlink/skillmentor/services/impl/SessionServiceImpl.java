@@ -207,6 +207,15 @@ public class SessionServiceImpl implements SessionService {
         ValidationUtils.validateMentorAvailability(mentor, sessionDTO.getSessionAt(), duration);
         ValidationUtils.validateStudentAvailability(student, sessionDTO.getSessionAt(), duration);
 
+        // Validation 3: Prevent multiple sessions for the same subject and time window
+        // by the same student
+        boolean exists = sessionRepository.existsByStudentAndSubjectAndSessionAt(student, subject,
+                sessionDTO.getSessionAt());
+        if (exists) {
+            throw new SkillMentorException("You have already booked a session for this subject at this specific time.",
+                    HttpStatus.CONFLICT);
+        }
+
         Session session = new Session();
         session.setStudent(student);
         session.setMentor(mentor);
