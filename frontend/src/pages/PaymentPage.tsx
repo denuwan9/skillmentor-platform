@@ -158,19 +158,23 @@ export default function PaymentPage() {
               {errorModal.description}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-center mt-4">
+          <DialogFooter className="sm:justify-center mt-4 text-center">
             <Button
               variant="outline"
               onClick={() => {
                 setErrorModal(prev => ({ ...prev, isOpen: false }));
-                navigate(-1); // Go back to calendar
+                navigate(-1);
               }}
+              className="hover:bg-slate-50"
             >
               Change Date/Time
             </Button>
             <Button
-              onClick={() => setErrorModal(prev => ({ ...prev, isOpen: false }))}
-              className="bg-slate-900"
+              onClick={() => {
+                setErrorModal(prev => ({ ...prev, isOpen: false }));
+                navigate(-1);
+              }}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               Understood
             </Button>

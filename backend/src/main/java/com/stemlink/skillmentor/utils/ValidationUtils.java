@@ -30,7 +30,8 @@ public class ValidationUtils {
 
         for (Session existingSession : mentorSessions) {
             Date existingStart = existingSession.getSessionAt();
-            Date existingEnd = addMinutesToDate(existingStart, existingSession.getDurationMinutes());
+            Date existingEnd = addMinutesToDate(existingStart,
+                    existingSession.getDurationMinutes() != null ? existingSession.getDurationMinutes() : 60);
 
             // Check for time overlap
             if (isTimeOverlap(sessionAt, sessionEnd, existingStart, existingEnd)) {
@@ -58,7 +59,8 @@ public class ValidationUtils {
 
         for (Session existingSession : studentSessions) {
             Date existingStart = existingSession.getSessionAt();
-            Date existingEnd = addMinutesToDate(existingStart, existingSession.getDurationMinutes());
+            Date existingEnd = addMinutesToDate(existingStart,
+                    existingSession.getDurationMinutes() != null ? existingSession.getDurationMinutes() : 60);
 
             // Check for time overlap
             if (isTimeOverlap(sessionAt, sessionEnd, existingStart, existingEnd)) {

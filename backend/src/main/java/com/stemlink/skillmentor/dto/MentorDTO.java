@@ -8,6 +8,8 @@ import lombok.Data;
 @Data
 public class MentorDTO {
 
+    private Long id;
+
     // Admin-only override fields — if provided by an ADMIN caller, these are used
     // directly instead of extracting identity from the JWT claims. Ignored for
     // MENTOR role.

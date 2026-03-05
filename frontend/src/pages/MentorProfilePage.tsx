@@ -38,6 +38,10 @@ const MentorProfilePage = () => {
                 return res.json();
             })
             .then(data => {
+                // Ensure the numeric ID is available in the object
+                if (!data.id && mentorId) {
+                    data.id = Number(mentorId);
+                }
                 setMentor(data);
                 setLoading(false);
             })

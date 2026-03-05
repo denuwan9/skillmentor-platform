@@ -71,7 +71,8 @@ public class AbstractController {
                 .println("CRITICAL: Generic Exception Triggered: " + ex.getClass().getName() + " - " + ex.getMessage());
         log.error("Unexpected error: ", ex);
         ErrorResponse errorResponse = ErrorResponse.builder()
-                .message("An unexpected error occurred")
+                .message("An unexpected error occurred: "
+                        + (ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()))
                 .errorCode("INTERNAL SERVER ERROR")
                 .timestamp(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                 .build();

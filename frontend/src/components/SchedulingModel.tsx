@@ -64,14 +64,21 @@ export function SchedulingModal({
         0
       );
 
-      const sessionId = `${mentor.id}-${Date.now()}`;
+      const mentorId = mentor.id || (typeof mentor.mentorId === 'number' ? mentor.mentorId : null);
+      const subjectId = subject?.id;
+
+      if (!mentorId || !subjectId) {
+        console.error("Missing IDs for scheduling:", { mentorId, subjectId, mentor, subject });
+      }
+
+      const sessionId = `${mentorId || 'unknown'}-${Date.now()}`;
       const searchParams = new URLSearchParams({
         date: sessionDateTime.toISOString(),
         courseTitle: subject?.subjectName ?? "",
         mentorName: mentorName,
-        mentorId: String(mentor.id),
+        mentorId: String(mentorId ?? ""),
         mentorImg: mentor.profileImageUrl ?? "",
-        subjectId: String(subject?.id ?? ""),
+        subjectId: String(subjectId ?? ""),
       });
       navigate(`/payment/${sessionId}?${searchParams.toString()}`);
     }

@@ -180,57 +180,72 @@ public class SessionServiceImpl implements SessionService {
     @Transactional
     @CacheEvict(value = "mentors", allEntries = true)
     public Session enrollSession(UserPrincipal userPrincipal, SessionDTO sessionDTO) {
-        // Find student by email from JWT, or auto-create user on first enrollment
-        Student student = studentRepository.findByEmail(userPrincipal.getEmail())
-                .orElseGet(() -> {
-                    Student s = new Student();
-                    s.setStudentId(userPrincipal.getId());
-                    s.setEmail(userPrincipal.getEmail());
-                    s.setFirstName(userPrincipal.getFirstName());
-                    s.setLastName(userPrincipal.getLastName());
-                    return studentRepository.save(s);
-                });
+        try {
+            // Find student by email from JWT, or auto-create user on first enrollment
+            Student student = studentRepository.findByEmail(userPrincipal.getEmail())
+                    .orElseGet(() -> {
+                        log.info("Creating new student record for email: {}", userPrincipal.getEmail());
+                        Student s = new Student();
+                        s.setStudentId(userPrincipal.getId());
+                        s.setEmail(userPrincipal.getEmail());
+                        s.setFirstName(userPrincipal.getFirstName());
+                        s.setLastName(userPrincipal.getLastName());
+                        return studentRepository.save(s);
+                    });
 
-        Mentor mentor = mentorRepository.findById(sessionDTO.getMentorId())
-                .orElseThrow(() -> new RuntimeException("Mentor not found with ID: " + sessionDTO.getMentorId()));
-        Subject subject = subjectRepository.findById(sessionDTO.getSubjectId())
-                .orElseThrow(() -> new SkillMentorException("Subject not found with id: " + sessionDTO.getSubjectId(),
-                        HttpStatus.NOT_FOUND));
+            Mentor mentor = mentorRepository.findById(sessionDTO.getMentorId())
+                    .orElseThrow(() -> new SkillMentorException("Mentor not found with ID: " + sessionDTO.getMentorId(),
+                            HttpStatus.NOT_FOUND));
+            Subject subject = subjectRepository.findById(sessionDTO.getSubjectId())
+                    .orElseThrow(
+                            () -> new SkillMentorException("Subject not found with id: " + sessionDTO.getSubjectId(),
+                                    HttpStatus.NOT_FOUND));
 
-        // Validation 1: Session time must not be in the past
-        if (sessionDTO.getSessionAt().before(new Date())) {
-            throw new SkillMentorException("Cannot book a session in the past", HttpStatus.BAD_REQUEST);
+            // Validation 1: Session time must not be in the past
+            if (sessionDTO.getSessionAt().before(new Date())) {
+                throw new SkillMentorException("Cannot book a session in the past", HttpStatus.BAD_REQUEST);
+            }
+
+            // Validation 2: Double-booking prevention (Mentor and Student availability)
+            Integer duration = sessionDTO.getDurationMinutes() != null ? sessionDTO.getDurationMinutes() : 60;
+            ValidationUtils.validateMentorAvailability(mentor, sessionDTO.getSessionAt(), duration);
+            ValidationUtils.validateStudentAvailability(student, sessionDTO.getSessionAt(), duration);
+
+            // Validation 3: Prevent multiple sessions for the same subject and time window
+            // by the same student
+            boolean exists = sessionRepository.existsByStudentAndSubjectAndSessionAt(student, subject,
+                    sessionDTO.getSessionAt());
+            if (exists) {
+                throw new SkillMentorException(
+                        "You have already booked a session for this subject at this specific time.",
+                        HttpStatus.CONFLICT);
+            }
+
+            Session session = new Session();
+            session.setStudent(student);
+            session.setMentor(mentor);
+            session.setSubject(subject);
+            session.setSessionAt(sessionDTO.getSessionAt());
+            session.setDurationMinutes(sessionDTO.getDurationMinutes() != null ? sessionDTO.getDurationMinutes() : 60);
+            session.setSessionStatus("scheduled");
+            session.setPaymentStatus("pending");
+
+            Session savedSession = sessionRepository.save(session);
+            sessionRepository.flush();
+            updateMentorStats(mentor.getId());
+            updateSubjectStats(subject.getId());
+
+            log.info("Successfully enrolled student {} in session for subject {} at {}", student.getEmail(),
+                    subject.getSubjectName(), sessionDTO.getSessionAt());
+            return savedSession;
+        } catch (SkillMentorException e) {
+            log.warn("Booking validation failed: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during session enrollment", e);
+            throw new SkillMentorException("Failed to enroll in session due to an internal error: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        // Validation 2: Double-booking prevention (Mentor and Student availability)
-        Integer duration = sessionDTO.getDurationMinutes() != null ? sessionDTO.getDurationMinutes() : 60;
-        ValidationUtils.validateMentorAvailability(mentor, sessionDTO.getSessionAt(), duration);
-        ValidationUtils.validateStudentAvailability(student, sessionDTO.getSessionAt(), duration);
-
-        // Validation 3: Prevent multiple sessions for the same subject and time window
-        // by the same student
-        boolean exists = sessionRepository.existsByStudentAndSubjectAndSessionAt(student, subject,
-                sessionDTO.getSessionAt());
-        if (exists) {
-            throw new SkillMentorException("You have already booked a session for this subject at this specific time.",
-                    HttpStatus.CONFLICT);
-        }
-
-        Session session = new Session();
-        session.setStudent(student);
-        session.setMentor(mentor);
-        session.setSubject(subject);
-        session.setSessionAt(sessionDTO.getSessionAt());
-        session.setDurationMinutes(sessionDTO.getDurationMinutes() != null ? sessionDTO.getDurationMinutes() : 60);
-        session.setSessionStatus("scheduled");
-        session.setPaymentStatus("pending");
-
-        Session savedSession = sessionRepository.save(session);
-        sessionRepository.flush();
-        updateMentorStats(mentor.getId());
-        updateSubjectStats(subject.getId());
-
-        return savedSession;
     }
 
     public List<Session> getSessionsByStudentEmail(String email) {
