@@ -10,6 +10,8 @@ import ManageBookingsPage from "@/pages/admin/ManageBookingsPage";
 import CreateSubjectPage from "@/pages/admin/CreateSubjectPage";
 import CreateMentorPage from "@/pages/admin/CreateMentorPage";
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
+import AboutUsPage from "@/pages/AboutUsPage";
+import ResourcesPage from "@/pages/ResourcesPage";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 
 function App() {
@@ -18,6 +20,8 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutUsPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
           <Route path="/mentors/:mentorId" element={<MentorProfilePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route

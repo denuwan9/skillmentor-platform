@@ -26,14 +26,14 @@ export function Navigation() {
         Tutors
       </Link>
       <Link
-        to="/"
+        to="/about"
         className="hover:text-primary transition-colors"
         onClick={() => mobile && setIsOpen(false)}
       >
         About Us
       </Link>
       <Link
-        to="/"
+        to="/resources"
         className="hover:text-primary transition-colors"
         onClick={() => mobile && setIsOpen(false)}
       >

@@ -43,7 +43,7 @@ const AdminLayout = () => {
   const SidebarContent = () => (
     <>
       <div className="p-6 border-b">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">
           <img src={logo} alt="SkillMentor Logo" className="w-8 h-8 rounded-lg object-contain" />
           <span className="font-bold text-xl tracking-tight">SkillMentor</span>
         </Link>
