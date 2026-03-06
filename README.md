@@ -63,7 +63,7 @@ cd backend
 ./mvnw clean install
 ./mvnw spring-boot:run
 ```
-*The API will be available at `http://localhost:8081`.*
+*The API will be available at `${import.meta.env.VITE_API_BASE_URL}`.*
 
 #### **3. Frontend Setup**
 Navigate to the frontend directory and install dependencies.
@@ -90,7 +90,7 @@ npm run dev
 | Variable | Description |
 | :--- | :--- |
 | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk Publishable Key for Auth |
-| `VITE_API_BASE_URL` | Backend API URL (e.g., `http://localhost:8081`) |
+| `VITE_API_BASE_URL` | Backend API URL (e.g., `${import.meta.env.VITE_API_BASE_URL}`) |
 
 ---
 
@@ -98,8 +98,8 @@ npm run dev
 
 The backend service includes built-in Swagger documentation for easy API exploration.
 
-- **Swagger UI**: [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
-- **OpenAPI Spec**: `http://localhost:8081/v3/api-docs`
+- **Swagger UI**: [${import.meta.env.VITE_API_BASE_URL}/swagger-ui/index.html](${import.meta.env.VITE_API_BASE_URL}/swagger-ui/index.html)
+- **OpenAPI Spec**: `${import.meta.env.VITE_API_BASE_URL}/v3/api-docs`
 
 ---
 

@@ -32,7 +32,7 @@ const MentorProfilePage = () => {
 
     React.useEffect(() => {
         // Fetch mentor details from the NEW public profile endpoint
-        fetch(`http://localhost:8081/api/v1/mentors/${mentorId}/profile`)
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors/${mentorId}/profile`)
             .then(res => {
                 if (!res.ok) throw new Error("Failed to load profile");
                 return res.json();

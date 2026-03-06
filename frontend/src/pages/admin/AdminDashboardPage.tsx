@@ -38,10 +38,10 @@ const AdminDashboardPage = () => {
 
                 // Fetching all counts in parallel
                 const [bookingsRes, mentorsRes, subjectsRes, studentsRes] = await Promise.all([
-                    fetch("http://localhost:8081/api/v1/admin/bookings", { headers }),
-                    fetch("http://localhost:8081/api/v1/mentors", { headers }),
-                    fetch("http://localhost:8081/api/v1/subjects", { headers }),
-                    fetch("http://localhost:8081/api/v1/students", { headers }),
+                    fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/admin/bookings", { headers }),
+                    fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors", { headers }),
+                    fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects", { headers }),
+                    fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/students", { headers }),
                 ]);
 
                 const [bookings, mentors, subjects, students] = await Promise.all([

@@ -78,8 +78,8 @@ const CreateSubjectPage = () => {
             const headers = { Authorization: `Bearer ${token}` };
 
             const [mentorsRes, subjectsRes] = await Promise.all([
-                fetch("http://localhost:8081/api/v1/mentors", { headers }),
-                fetch("http://localhost:8081/api/v1/subjects", { headers })
+                fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors", { headers }),
+                fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects", { headers })
             ]);
 
             const mentorsData = await mentorsRes.json();
@@ -108,8 +108,8 @@ const CreateSubjectPage = () => {
             }
 
             const url = editingId
-                ? `http://localhost:8081/api/v1/subjects/${editingId}`
-                : "http://localhost:8081/api/v1/subjects";
+                ? `${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects/${editingId}`
+                : "${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects";
 
             const method = editingId ? "PUT" : "POST";
 
@@ -157,7 +157,7 @@ const CreateSubjectPage = () => {
             const token = await getToken({ template: "skillmentor-auth" });
             if (!token) return;
 
-            const res = await fetch(`http://localhost:8081/api/v1/subjects/${id}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects/${id}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });

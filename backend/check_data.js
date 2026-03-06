@@ -1,6 +1,6 @@
 const http = require('http');
 
-http.get('http://localhost:8081/api/v1/mentors', (res) => {
+http.get('${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors', (res) => {
     let data = '';
     res.on('data', (chunk) => data += chunk);
     res.on('end', () => {

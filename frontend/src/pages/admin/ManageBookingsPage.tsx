@@ -71,7 +71,7 @@ const ManageBookingsPage = () => {
                 setLoading(false);
                 return;
             }
-            const res = await fetch("http://localhost:8081/api/v1/admin/bookings", {
+            const res = await fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/admin/bookings", {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -114,7 +114,7 @@ const ManageBookingsPage = () => {
             }
 
             const isLink = type === "link";
-            const res = await fetch(`http://localhost:8081/api/v1/admin/bookings/${id}/${endpoint}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/admin/bookings/${id}/${endpoint}`, {
                 method: method,
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -144,7 +144,7 @@ const ManageBookingsPage = () => {
                 toast.error("Authentication required.");
                 return;
             }
-            const res = await fetch(`http://localhost:8081/api/v1/admin/bookings/${id}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/admin/bookings/${id}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${token}`
