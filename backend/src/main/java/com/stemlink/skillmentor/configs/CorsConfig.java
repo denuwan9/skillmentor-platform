@@ -9,10 +9,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
+
 @Configuration
 public class CorsConfig {
 
-    @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:8080}")
+    @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
     @Bean
@@ -34,8 +35,7 @@ public class CorsConfig {
                 "Authorization",
                 "X-Rate-Limit-Remaining",
                 "X-Rate-Limit-Retry-After-Seconds",
-                "Retry-After"
-        ));
+                "Retry-After"));
 
         // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);

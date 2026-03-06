@@ -44,6 +44,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/static/**",
                                 "/api/public/**",
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
@@ -53,8 +56,8 @@ public class SecurityConfig {
                                 "/error",
                                 "/swagger-resources/**")
                         .permitAll()
-                        // Public read access to mentors from home page
-                        .requestMatchers(HttpMethod.GET, "/api/v1/mentors", "/api/v1/mentors/**").permitAll()
+                        // Public read access to mentors/subjects from home page
+                        .requestMatchers(HttpMethod.GET, "/api/v1/mentors/**", "/api/v1/subjects/**").permitAll()
                         // Admin restricted routes
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
