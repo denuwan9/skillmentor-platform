@@ -47,7 +47,7 @@ const AdminDashboardPage = () => {
                 const results = await Promise.all(responses.map(async (res) => {
                     if (!res.ok) {
                         const errorText = await res.text();
-                        throw new Error(`Backend error: ${res.status}`);
+                        throw new Error(`Backend error ${res.status}: ${errorText.substring(0, 100)}`);
                     }
                     return res.json(); 
                 }));
