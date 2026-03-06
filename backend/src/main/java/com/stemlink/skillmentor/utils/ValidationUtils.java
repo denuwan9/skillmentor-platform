@@ -27,6 +27,8 @@ public class ValidationUtils {
 
         Date sessionEnd = addMinutesToDate(sessionAt, durationMinutes);
         List<Session> mentorSessions = mentor.getSessions();
+        if (mentorSessions == null)
+            return;
 
         for (Session existingSession : mentorSessions) {
             Date existingStart = existingSession.getSessionAt();
@@ -56,6 +58,8 @@ public class ValidationUtils {
 
         Date sessionEnd = addMinutesToDate(sessionAt, durationMinutes);
         List<Session> studentSessions = student.getSessions();
+        if (studentSessions == null)
+            return;
 
         for (Session existingSession : studentSessions) {
             Date existingStart = existingSession.getSessionAt();
