@@ -126,7 +126,7 @@ const CreateMentorPage = () => {
 
     const fetchMentors = React.useCallback(async () => {
         try {
-            const res = await fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors");
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors`);
             const data = await res.json();
             setMentors(data.content || data);
         } catch (err) {
@@ -229,7 +229,7 @@ const CreateMentorPage = () => {
             const token = await getToken({ template: "skillmentor-auth" });
             const url = editingMentorId
                 ? `${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors/${editingMentorId}`
-                : "${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors";
+                : `${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors`;
 
             const res = await fetch(url, {
                 method: editingMentorId ? "PUT" : "POST",

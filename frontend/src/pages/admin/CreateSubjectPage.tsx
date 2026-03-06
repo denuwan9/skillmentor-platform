@@ -78,8 +78,8 @@ const CreateSubjectPage = () => {
             const headers = { Authorization: `Bearer ${token}` };
 
             const [mentorsRes, subjectsRes] = await Promise.all([
-                fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors", { headers }),
-                fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects", { headers })
+                fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors`, { headers }),
+                fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects`, { headers })
             ]);
 
             const mentorsData = await mentorsRes.json();
@@ -109,7 +109,7 @@ const CreateSubjectPage = () => {
 
             const url = editingId
                 ? `${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects/${editingId}`
-                : "${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects";
+                : `${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects`;
 
             const method = editingId ? "PUT" : "POST";
 

@@ -71,7 +71,7 @@ const ManageBookingsPage = () => {
                 setLoading(false);
                 return;
             }
-            const res = await fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/admin/bookings", {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/admin/bookings`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }

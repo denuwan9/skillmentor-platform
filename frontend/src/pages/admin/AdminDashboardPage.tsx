@@ -36,20 +36,24 @@ const AdminDashboardPage = () => {
                 }
                 const headers = { Authorization: `Bearer ${token}` };
 
-                // Fetching all counts in parallel
-                const [bookingsRes, mentorsRes, subjectsRes, studentsRes] = await Promise.all([
-                    fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/admin/bookings", { headers }),
-                    fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors", { headers }),
-                    fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects", { headers }),
-                    fetch("${import.meta.env.VITE_API_BASE_URL}/api/v1/students", { headers }),
+                // Fetching all counts in parallel using Backticks (``)
+                const responses = await Promise.all([
+                    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/admin/bookings`, { headers }),
+                    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/mentors`, { headers }),
+                    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/subjects`, { headers }),
+                    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/students`, { headers }),
                 ]);
 
-                const [bookings, mentors, subjects, students] = await Promise.all([
-                    bookingsRes.json(),
-                    mentorsRes.json(),
-                    subjectsRes.json(),
-                    studentsRes.json(),
-                ]);
+                const results = await Promise.all(responses.map(async (res) => {
+                    if (!res.ok) {
+                    
+                        const errorText = await res.text();
+                        throw new Error(`Backend error: ${res.status}`);
+                    }
+                    return res.json(); 
+                }));
+
+                const [bookings, mentors, subjects, students] = results;
 
                 const bookingsArray = Array.isArray(bookings) ? bookings : [];
                 const mentorsData = mentors.content || (Array.isArray(mentors) ? mentors : []);
