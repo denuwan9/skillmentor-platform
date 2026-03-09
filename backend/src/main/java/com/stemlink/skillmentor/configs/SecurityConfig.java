@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/index.html",
                                 "/static/**",
                                 "/api/public/**",
+                                "/api/v1/health", // Keep-alive ping — no auth required
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
                                 "/swagger-ui/**",
