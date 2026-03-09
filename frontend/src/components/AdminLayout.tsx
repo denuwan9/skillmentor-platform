@@ -1,5 +1,5 @@
-
-import { Link, Outlet } from "react-router";
+import React from "react";
+import { Link, Outlet, useNavigate } from "react-router";
 import { useUser, SignOutButton } from "@clerk/clerk-react";
 import {
   BookOpen,
@@ -15,9 +15,24 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const AdminLayout = () => {
   const { user, isLoaded } = useUser();
+  const navigate = useNavigate();
 
-  // Wait for Clerk to fully load before computing role
-  // This prevents the race condition where publicMetadata is empty on first render
+  // Supports both singular `role` string and plural `roles` array in publicMetadata
+  const publicMetadata = user?.publicMetadata as { role?: string; roles?: string[] } | undefined;
+  const isAdmin =
+    (publicMetadata?.role?.trim().toLowerCase() === "admin") ||
+    (Array.isArray(publicMetadata?.roles) &&
+      publicMetadata.roles.some(r => r.trim().toLowerCase() === "admin"));
+
+  React.useEffect(() => {
+    // Wait until Clerk has fully resolved the user before checking role
+    if (!isLoaded) return;
+    if (!user || !isAdmin) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isLoaded, user, isAdmin, navigate]);
+
+  // Show spinner while Clerk is loading (prevents layout flash on non-admin redirect)
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -29,14 +44,6 @@ const AdminLayout = () => {
     );
   }
 
-  // Only compute role AFTER Clerk is fully loaded (publicMetadata is guaranteed populated)
-  const publicMetadata = user?.publicMetadata as { role?: string; roles?: string[] } | undefined;
-  const isAdmin =
-    (publicMetadata?.role?.trim().toLowerCase() === "admin") ||
-    (Array.isArray(publicMetadata?.roles) &&
-      publicMetadata.roles.some(r => r.trim().toLowerCase() === "admin"));
-
-  // Not an admin — silently render nothing (RoleRedirect already handles navigation)
   if (!user || !isAdmin) return null;
 
   const navItems = [
