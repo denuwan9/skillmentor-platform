@@ -14,8 +14,8 @@ createRoot(document.getElementById("root")!).render(
     <ClerkProvider
       publishableKey={PUBLISHABLE_KEY}
       afterSignOutUrl="/"
-      signInForceRedirectUrl="/redirect"
-      signUpForceRedirectUrl="/redirect"
+      signInForceRedirectUrl="/dashboard"
+      signUpForceRedirectUrl="/dashboard"
     >
       <App />
     </ClerkProvider>

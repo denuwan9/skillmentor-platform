@@ -30,19 +30,10 @@ const RoleRedirect = () => {
             | { role?: string; roles?: string[] }
             | undefined;
 
-        // DEBUG: open browser console to see exactly what Clerk returns
-        console.log("[RoleRedirect] publicMetadata:", metadata);
-        console.log("[RoleRedirect] role value:", metadata?.role);
-
-        // Trim and lowercase for a case-insensitive, whitespace-safe comparison
-        const role = (metadata?.role as string | undefined)?.trim().toLowerCase();
-
         const isAdmin =
-            role === "admin" ||
-            (Array.isArray(metadata?.roles) &&
-                metadata.roles.some((r) => r.trim().toLowerCase() === "admin"));
-
-        console.log("[RoleRedirect] isAdmin:", isAdmin);
+            metadata?.role === "admin" ||
+            metadata?.role === "ADMIN" ||
+            (Array.isArray(metadata?.roles) && metadata.roles.includes("ADMIN"));
 
         if (isAdmin) {
             navigate("/admin", { replace: true });
