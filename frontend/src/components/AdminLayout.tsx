@@ -20,9 +20,9 @@ const AdminLayout = () => {
   // Supports both singular `role` string and plural `roles` array in publicMetadata
   const publicMetadata = user?.publicMetadata as { role?: string; roles?: string[] } | undefined;
   const isAdmin =
-    publicMetadata?.role === "admin" ||
-    publicMetadata?.role === "ADMIN" ||
-    (Array.isArray(publicMetadata?.roles) && publicMetadata.roles.includes("ADMIN"));
+    (publicMetadata?.role?.trim().toLowerCase() === "admin") ||
+    (Array.isArray(publicMetadata?.roles) &&
+      publicMetadata.roles.some(r => r.trim().toLowerCase() === "admin"));
 
   React.useEffect(() => {
     // Wait until Clerk has fully resolved the user before checking role
