@@ -12,7 +12,6 @@ import CreateMentorPage from "@/pages/admin/CreateMentorPage";
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
 import AboutUsPage from "@/pages/AboutUsPage";
 import ResourcesPage from "@/pages/ResourcesPage";
-import RoleRedirect from "@/components/RoleRedirect";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 
 function App() {
@@ -59,21 +58,6 @@ function App() {
             <Route path="mentors" element={<CreateMentorPage />} />
             <Route path="subjects" element={<CreateSubjectPage />} />
           </Route>
-
-          {/* Post-login role-based redirect — set Clerk's afterSignInUrl to "/redirect" */}
-          <Route
-            path="/redirect"
-            element={
-              <>
-                <SignedIn>
-                  <RoleRedirect />
-                </SignedIn>
-                <SignedOut>
-                  <LoginPage />
-                </SignedOut>
-              </>
-            }
-          />
 
           <Route path="*" element={<LoginPage />} />
         </Routes>

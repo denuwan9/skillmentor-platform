@@ -14,35 +14,22 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const AdminLayout = () => {
-  const { user, isLoaded } = useUser();
+  const { user } = useUser();
   const navigate = useNavigate();
 
-  // Supports both singular `role` string and plural `roles` array in publicMetadata
+  // Role check: redirect if not admin
+  // Role check: support both singular string role and plural roles array
   const publicMetadata = user?.publicMetadata as { role?: string; roles?: string[] } | undefined;
   const isAdmin =
-    (publicMetadata?.role?.trim().toLowerCase() === "admin") ||
-    (Array.isArray(publicMetadata?.roles) &&
-      publicMetadata.roles.some(r => r.trim().toLowerCase() === "admin"));
+    publicMetadata?.role === "admin" ||
+    publicMetadata?.role === "ADMIN" ||
+    (Array.isArray(publicMetadata?.roles) && publicMetadata.roles.includes("ADMIN"));
 
   React.useEffect(() => {
-    // Wait until Clerk has fully resolved the user before checking role
-    if (!isLoaded) return;
-    if (!user || !isAdmin) {
-      navigate("/dashboard", { replace: true });
+    if (user && !isAdmin) {
+      navigate("/dashboard");
     }
-  }, [isLoaded, user, isAdmin, navigate]);
-
-  // Show spinner while Clerk is loading (prevents layout flash on non-admin redirect)
-  if (!isLoaded) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-3 text-slate-500">
-          <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-medium">Loading admin panel…</p>
-        </div>
-      </div>
-    );
-  }
+  }, [user, isAdmin, navigate]);
 
   if (!user || !isAdmin) return null;
 
