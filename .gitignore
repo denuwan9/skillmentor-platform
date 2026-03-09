@@ -3,7 +3,6 @@ node_modules/
 .pnpm-store/
 
 # IDEs and Editors
-.vscode/
 .idea/
 
 # Build outputs
@@ -13,10 +12,9 @@ target/
 *.log
 
 # Environment variables
-.env
-.env.local
 .env.*.local
 
 # OS files
 .DS_Store
 Thumbs.db
+config.bat
